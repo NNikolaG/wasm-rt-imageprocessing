@@ -1,4 +1,5 @@
 const std = @import("std");
+const assert = std.debug.assert;
 const allocator = std.heap.wasm_allocator;
 
 extern fn print(u8) void;
@@ -31,6 +32,21 @@ export fn grayscale(ptr: [*]u8, len: usize) void {
         ptr[i] = gray;
         ptr[i + 1] = gray;
         ptr[i + 2] = gray;
+    }
+}
+
+export fn monochrome(ptr: [*]u8, len: usize, r: u32, g: u32, b: u32) void {
+    var i: u32 = 0;
+    while (i < len) : (i += 4) {
+        const pixe_r: u32 = @intCast(ptr[i]);
+        const pixel_g: u32 = @intCast(ptr[i + 1]);
+        const pixel_b: u32 = @intCast(ptr[i + 2]);
+        // No need to convert to grayscale, already is.
+
+        // Apply the grayscale value to the chosen color
+        ptr[i] = @intCast((pixe_r * r) / 255); // Red channel
+        ptr[i + 1] = @intCast((pixel_g * g) / 255); // Green channel
+        ptr[i + 2] = @intCast((pixel_b * b) / 255); // Blue channel
     }
 }
 

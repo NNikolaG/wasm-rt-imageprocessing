@@ -65,12 +65,16 @@ function toggleAsciiMode() {
   const isAsciiMode = elements.canvas.classList.toggle("d-none");
   elements.ascii.classList.toggle("d-none");
   elements.asciiConfig.classList.toggle("d-none");
+  elements.canvasConfig.classList.toggle("d-none");
 
   if (isAsciiMode) {
     elements.asciiToggle.textContent = "Switch to Canvas";
+    elements.colorPicker.previousElementSibling.textContent = "Color: ";
     updateCanvasAndFontSize(parseInt(elements.slider.value, 10));
   } else {
+    config.color = "#ffffff";
     elements.asciiToggle.textContent = "Switch to ASCII";
+    elements.colorPicker.previousElementSibling.textContent = "Monochrome: ";
     elements.canvas.width = config.canvasWidth;
     elements.canvas.height = config.canvasWidth * config.aspectRatio;
   }
@@ -86,4 +90,19 @@ export async function initAndPlay(callback) {
   video.addEventListener("playing", () => {
     callback(video);
   });
+}
+
+export function hexToRgb(hex) {
+  // Strip the '#' if it's there
+  hex = hex.replace("#", "");
+
+  // Parse the r, g, b values from the hex string
+  const r = parseInt(hex.slice(0, 2), 16); // Red
+  const g = parseInt(hex.slice(2, 4), 16); // Green
+  const b = parseInt(hex.slice(4, 6), 16); // Blue
+
+  // Create a Uint8Array to store the RGB values
+  const rgbArray = new Uint8Array([r, g, b]);
+
+  return rgbArray;
 }

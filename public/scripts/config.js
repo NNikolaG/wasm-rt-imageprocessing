@@ -2,6 +2,7 @@
 export const elements = {
   sliderWrapper: document.querySelector(".slider-wrapper"),
   canvasHeight: document.querySelector("#canvas-height"),
+  canvasConfig: document.querySelector(".canvas-config"),
   slider: document.querySelector("#resolution-slider"),
   canvasWidth: document.querySelector("#canvas-width"),
   themeToggle: document.querySelector(".theme-toggle"),
@@ -10,6 +11,8 @@ export const elements = {
   colorPicker: document.querySelector("#color-picker"),
   lineHeight: document.querySelector("#line-height"),
   invertCheckbox: document.querySelector("#invert"),
+  monochrome: document.querySelector("#monochrome"),
+  grayscale: document.querySelector("#grayscale"),
   fontSize: document.querySelector("#font-size"),
   canvas: document.querySelector("#canvas"),
   ascii: document.querySelector(".ascii"),

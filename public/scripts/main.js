@@ -25,7 +25,7 @@ function processVideoFrames(video, wasmExports) {
     const data = imageData.data;
     const stringLength = canvas.width * canvas.height;
 
-    const totalLen = data.length + stringLength;
+    const totalLen = data.length + stringLength + 6;
     const totalPtr = wasmExports.alloc(totalLen);
     const totalMemory = new Uint8Array(memory.buffer, totalPtr, totalLen);
 
@@ -46,6 +46,16 @@ function processVideoFrames(video, wasmExports) {
       canvas.width,
       config.inverted,
     );
+
+    if (elements.monochrome.checked) {
+      const rgb = utils.hexToRgb(config.color);
+      wasmExports.monochrome(totalPtr, data.length, ...rgb);
+    }
+
+    if (elements.grayscale.checked || elements.monochrome.checked) {
+      imageData.data.set(imageView);
+      context.putImageData(imageData, 0, 0);
+    }
 
     const stringRepresentation = new TextDecoder().decode(stringView, {
       stream: true,

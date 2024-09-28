@@ -18,6 +18,8 @@
             <button class="theme-toggle toggle">Switch to Light Theme</button>
             <button class="ascii-toggle toggle">Switch to Canvas</button>
 
+            <hr />
+
             <div class="ascii-config">
                 <div class="slider-wrapper">
                     <label for="resolution-slider">Adjust Resolution:</label>
@@ -30,15 +32,11 @@
                         value="100"
                     />
                 </div>
+                <hr />
+
                 <label for="invert">Inverted:</label>
                 <input type="checkbox" id="invert" />
 
-                <hr />
-
-                <label class="color-picker" for="color-picker">
-                    Pick ASCII Color:
-                </label>
-                <input type="color" id="color-picker" value="#000" />
                 <hr />
 
                 <p>Width: <span id="canvas-width"></span></p>
@@ -46,13 +44,25 @@
                 <p>Font Size: <span id="font-size"></span></p>
                 <p>Line Height: <span id="line-height"></span></p>
             </div>
+
+            <div class="canvas-config d-none">
+                <label for="grayscale">Grayscale:</label>
+                <input type="radio" id="grayscale" name="color" />
+
+                <label for="monochrome">Monochrome:</label>
+                <input type="radio" id="monochrome" name="color" />
+            </div>
+
+            <hr />
+
+            <label class="color-picker" for="color-picker">Color: </label>
+            <input type="color" id="color-picker" value="#ffffff" />
         </div>
         <main>
             <canvas class="d-none" id="canvas" width="100" height="40"></canvas>
             <pre class="ascii"></pre>
         </main>
 
-        <!-- External JS -->
         <script type="module" src="scripts/main.js"></script>
     </body>
 </html>
