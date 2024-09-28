@@ -6,14 +6,20 @@ export const elements = {
   canvasWidth: document.querySelector("#canvas-width"),
   themeToggle: document.querySelector(".theme-toggle"),
   asciiToggle: document.querySelector(".ascii-toggle"),
+  asciiConfig: document.querySelector(".ascii-config"),
+  colorPicker: document.querySelector("#color-picker"),
   lineHeight: document.querySelector("#line-height"),
-  asciiInfo: document.querySelector(".ascii-info"),
+  invertCheckbox: document.querySelector("#invert"),
   fontSize: document.querySelector("#font-size"),
   canvas: document.querySelector("#canvas"),
   ascii: document.querySelector(".ascii"),
-  pre: document.querySelector(".ascii"),
   main: document.querySelector("main"),
 };
+
+// WASM Memory
+export const memory = new WebAssembly.Memory({
+  initial: 25,
+});
 
 // Configuration
 export const config = {
@@ -22,7 +28,18 @@ export const config = {
   asciiRation: 0.4,
   fontSizeScale: 20,
   lineHeightScale: 1.2,
-  maxCanvasWidth: 1280,
+  canvasWidth: 1280,
+  inverted: false,
+  color: "#000",
+  importObject: {
+    env: {
+      print: (data) => console.log(data),
+      printf16: (data) => console.log(data),
+      printu32: (data) => console.log(data),
+      printusize: (data) => console.log(data),
+      memory: memory,
+    },
+  },
 };
 
 // Canvas context

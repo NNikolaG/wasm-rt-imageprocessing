@@ -1,38 +1,21 @@
-import { elements, context } from "./config.js";
+import { elements, context, memory, config } from "./config.js";
 import * as utils from "./utils.js";
-
-const memory = new WebAssembly.Memory({
-  initial: 25,
-});
 
 async function loadWasm() {
   const response = await fetch("../wasm/imageprocessing.wasm");
   const bytes = await response.arrayBuffer();
 
-  const { instance } = await WebAssembly.instantiate(bytes, {
-    env: {
-      print: (data) => console.log(data),
-      printf16: (data) => console.log(data),
-      printu32: (data) => console.log(data),
-      printusize: (data) => console.log(data),
-      memory: memory,
-    },
-  });
+  const { instance } = await WebAssembly.instantiate(
+    bytes,
+    config.importObject,
+  );
 
   return instance.exports;
 }
 
 async function startProcessing() {
   const wasmExports = await loadWasm();
-  const video = document.createElement("video");
-
-  const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-  video.srcObject = stream;
-  video.play();
-
-  video.addEventListener("playing", () => {
-    processVideoFrames(video, wasmExports);
-  });
+  utils.initAndPlay((video) => processVideoFrames(video, wasmExports));
 }
 
 function processVideoFrames(video, wasmExports) {
@@ -61,7 +44,7 @@ function processVideoFrames(video, wasmExports) {
       data.length,
       totalPtr + data.length,
       canvas.width,
-      canvas.height,
+      config.inverted,
     );
 
     const stringRepresentation = new TextDecoder().decode(stringView, {

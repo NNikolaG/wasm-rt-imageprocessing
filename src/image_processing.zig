@@ -34,31 +34,24 @@ export fn grayscale(ptr: [*]u8, len: usize) void {
     }
 }
 
-export fn ascii(image_ptr: [*]u8, len: usize, string_ptr: [*]u8, width: u32, height: u32) void {
+export fn ascii(image_ptr: [*]u8, len: usize, string_ptr: [*]u8, width: u32, inverted: bool) void {
     var i: u32 = 0;
     var j: u32 = 0;
     const ascii_map: []const u8 = " .:-=+*#%@";
     const ascii_map_len: f16 = @floatFromInt(ascii_map.len);
-    // _ = ascii_map_len;
 
-    const string_len: u32 = (width * height);
-    _ = string_len;
     while (i < len) : (i += 4) {
-        const value: f32 = @floatFromInt(image_ptr[i]);
-        const x: f32 = value / 255;
-        const ascii_index: u8 = @intFromFloat((x) * (ascii_map_len - 1));
+        const pixel: f32 = @floatFromInt(image_ptr[i]);
+        var value: f32 = pixel / 255;
+        if (inverted) {
+            value = 1 - value;
+        }
+        const ascii_index: u8 = @intFromFloat(value * (ascii_map_len - 1));
         string_ptr[j] = ascii_map[ascii_index];
 
         if (j > 0 and j % width == 0) {
             string_ptr[j] = 10;
         }
         j += 1;
-        //     // ptr[i] =
-        // }
-        // _ = image_ptr;
-        // _ = string_ptr;
-        // _ = len;
-        // _ = width;
-        // _ = height;
     }
 }

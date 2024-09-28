@@ -18,8 +18,8 @@ function updateCanvasAndFontSize(resolution) {
   elements.canvas.height = height;
 
   // Update ASCII text styles
-  elements.pre.style.fontSize = `${fontSize}px`;
-  elements.pre.style.lineHeight = `${lineHeight}px`;
+  elements.ascii.style.fontSize = `${fontSize}px`;
+  elements.ascii.style.lineHeight = `${lineHeight}px`;
 
   // Update UI displays
   elements.canvasWidth.textContent = width;
@@ -35,6 +35,13 @@ elements.slider.addEventListener("input", () => {
 
 elements.themeToggle.addEventListener("click", toggleTheme);
 elements.asciiToggle.addEventListener("click", toggleAsciiMode);
+elements.invertCheckbox.addEventListener("change", function () {
+  config.inverted = this.checked;
+});
+elements.colorPicker.addEventListener("change", function () {
+  config.color = elements.colorPicker.value;
+  elements.ascii.style.color = elements.colorPicker.value;
+});
 
 // Initialize with default values
 updateCanvasAndFontSize(config.defaultResolution);
@@ -56,16 +63,27 @@ function toggleTheme() {
  */
 function toggleAsciiMode() {
   const isAsciiMode = elements.canvas.classList.toggle("d-none");
-  elements.pre.classList.toggle("d-none");
-  elements.asciiInfo.classList.toggle("d-none");
-  elements.sliderWrapper.classList.toggle("d-none");
+  elements.ascii.classList.toggle("d-none");
+  elements.asciiConfig.classList.toggle("d-none");
 
   if (isAsciiMode) {
     elements.asciiToggle.textContent = "Switch to Canvas";
     updateCanvasAndFontSize(parseInt(elements.slider.value, 10));
   } else {
     elements.asciiToggle.textContent = "Switch to ASCII";
-    elements.canvas.width = config.maxCanvasWidth;
-    elements.canvas.height = config.maxCanvasWidth * config.aspectRatio;
+    elements.canvas.width = config.canvasWidth;
+    elements.canvas.height = config.canvasWidth * config.aspectRatio;
   }
+}
+
+export async function initAndPlay(callback) {
+  const video = document.createElement("video");
+
+  const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+  video.srcObject = stream;
+  video.play();
+
+  video.addEventListener("playing", () => {
+    callback(video);
+  });
 }
