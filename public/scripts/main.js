@@ -1,5 +1,6 @@
-const canvas = document.getElementById("canvas");
-const context = canvas.getContext("2d");
+import * as config from "./config.js";
+
+const context = config.canvas.getContext("2d");
 const asciiHtml = document.querySelector(".ascii");
 const memory = new WebAssembly.Memory({
   initial: 25,
