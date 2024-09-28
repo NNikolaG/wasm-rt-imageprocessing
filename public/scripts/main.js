@@ -1,10 +1,9 @@
-import * as config from "./config.js";
+import { elements, context } from "./config.js";
+import * as utils from "./utils.js";
 
-const context = config.canvas.getContext("2d");
-const asciiHtml = document.querySelector(".ascii");
 const memory = new WebAssembly.Memory({
   initial: 25,
-}); // Adjust size as needed
+});
 
 async function loadWasm() {
   const response = await fetch("../wasm/imageprocessing.wasm");
@@ -69,7 +68,7 @@ function processVideoFrames(video, wasmExports) {
       stream: true,
     });
 
-    asciiHtml.textContent = stringRepresentation;
+    elements.ascii.textContent = stringRepresentation;
 
     wasmExports.free(totalPtr, totalLen);
     requestAnimationFrame(processFrame);
