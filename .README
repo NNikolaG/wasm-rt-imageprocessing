@@ -13,8 +13,8 @@ Before you begin, ensure you have the following installed on your system:
 
 1. Clone the repository or download the project files:
    ```
-   git clone https://github.com/yourusername/your-project-name.git
-   cd your-project-name
+   git clone https://github.com/NNikolaG/wasm-rt-imageprocessing.git
+   cd zavrsni-rad
    ```
 
 ## Compiling Zig to WebAssembly
@@ -25,6 +25,11 @@ Before you begin, ensure you have the following installed on your system:
    ```
    zig build
    ```
+
+[//]: # TODO( Fix zig build )
+
+Initial zig build will throw error, run it multiple times.
+
    This will generate a `imageprocessing.wasm` file inside public/wasm.
 
 
@@ -33,79 +38,29 @@ Before you begin, ensure you have the following installed on your system:
 ```
 wasm-rt-imageprocessing/
 ├── src/
-│   ├── zig/
-│   │   └── main.zig
-│   └── js/
-│       └── main.js
-└── public/
-    ├── index.html
-    └── main.wasm
-```
+│   └── image_processing.zig       # Zig source for WebAssembly image processing
+├── public/
+│   ├── scripts/
+│   │   ├── main.js                # Main JavaScript to interact with WebAssembly
+│   │   ├── config.js              # Configuration settings for the application
+│   │   └── utils.js               # Utility functions for handling DOM and rendering
+│   ├── wasm/
+│   │   └── imageprocessing.wasm   # Compiled WebAssembly module
+│   ├── index.html                 # Entry point of the web interface
+│   ├── style.css                  # Styling for the web interface
+├── build.zig                      # Zig build script
 
-- `src/zig/main.zig`: Main Zig source file
-- `src/js/main.js`: Main JavaScript file for interacting with WASM
-- `public/index.html`: HTML file for the web application
-- `public/main.wasm`: Compiled WebAssembly module
+```
 
 ## Running the Project Locally
 
 To run the project locally, you need to serve the files using an HTTP server. You can use Python's built-in `http.server` module for this purpose:
 
-1. Navigate to the `public` directory:
-   ```
-   cd public
-   ```
+1. Navigate to the `root` directory:
 
 2. Start a simple HTTP server:
-   - If you're using Python 3:
-     ```
-     python -m http.server 8000
-     ```
-   - If you're using Python 2:
-     ```
-     python -m SimpleHTTPServer 8000
-     ```
+      ```
+      http-server
+      ```
 
-3. Open your web browser and navigate to `http://localhost:8000`.
-
-## Developing
-
-1. Edit the Zig code in `src/zig/main.zig`.
-2. Recompile the Zig code to WASM (follow the "Compiling Zig to WebAssembly" steps).
-3. Update the JavaScript code in `src/js/main.js` to interact with the WASM module.
-4. Refresh your browser to see the changes.
-
-## Interacting with WebAssembly from JavaScript
-
-In your `public/index.html` file, ensure you're loading the JavaScript file:
-
-```html
-<script src="../src/js/main.js"></script>
-```
-
-In your `src/js/main.js` file, you can load and interact with the WASM module like this:
-
-```javascript
-WebAssembly.instantiateStreaming(fetch('main.wasm'))
-  .then(obj => {
-    const exports = obj.instance.exports;
-    // Use the exported functions here
-    console.log(exports.your_exported_function());
-  });
-```
-
-Make sure to replace `your_exported_function` with the actual function you've exported from your Zig code.
-
-## Troubleshooting
-
-- If you encounter any issues with Zig compilation, ensure you're using the latest version of Zig.
-- For WASM-related issues, check that your browser supports WebAssembly.
-- If the WASM module isn't loading, verify that the file path in your JavaScript code matches the location of the `main.wasm` file.
-- If you see CORS errors in the console, make sure you're accessing the files through the HTTP server and not directly as local files.
-
-## Additional Resources
-
-- [Zig Documentation](https://ziglang.org/documentation/master/)
-- [WebAssembly Documentation](https://webassembly.org/docs/overview/)
-
-For any further questions or issues, please open an issue in the project repository.
+3. Open your web browser and navigate to `http://localhost:8080`.
