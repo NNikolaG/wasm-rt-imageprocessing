@@ -4,17 +4,17 @@ This document provides instructions on how to set up and run the project locally
 
 ## Prerequisites
 
-Before you begin, ensure you have the following installed on your system:
+Ensure you have the following installed on your system:
 
 1. [Zig](https://ziglang.org/download/) (latest version recommended)
-2. http-server: a simple static HTTP server
+2. http-server: a simple HTTP server
 
 ## Project Setup
 
 1. Clone the repository or download the project files:
    ```
    git clone https://github.com/NNikolaG/wasm-rt-imageprocessing.git
-   cd zavrsni-rad
+   cd wasm-rt-imageprocessing
    ```
 
 ## Compiling Zig to WebAssembly

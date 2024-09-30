@@ -20,6 +20,7 @@ async function startProcessing() {
 
 function processVideoFrames(video, wasmExports) {
   const processFrame = () => {
+    // TODO Refactor processFrame func
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
     const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
     const data = imageData.data;
