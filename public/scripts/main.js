@@ -33,20 +33,21 @@ function processVideoFrames(video, wasmExports) {
     const imageView = totalMemory.subarray(0, data.length);
     imageView.set(data);
 
-    wasmExports.grayscale(totalPtr, data.length);
+    // wasmExports.grayscale(totalPtr, data.length);
+    wasmExports.sepia(totalPtr, data.length);
 
     const stringView = totalMemory.subarray(
       data.length,
       data.length + stringLength,
     );
 
-    wasmExports.ascii(
-      totalPtr,
-      data.length,
-      totalPtr + data.length,
-      canvas.width,
-      config.inverted,
-    );
+    // wasmExports.ascii(
+    //   totalPtr,
+    //   data.length,
+    //   totalPtr + data.length,
+    //   canvas.width,
+    //   config.inverted,
+    // );
 
     if (elements.monochrome.checked) {
       const rgb = utils.hexToRgb(config.color);

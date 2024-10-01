@@ -21,14 +21,17 @@ pub export fn free(ptr: [*]u8, len: usize) void {
     allocator.free(ptr[0..len]);
 }
 
+fn extractRGB(ptr: [*]u8, i: usize) [3]u32 {
+    // Extract and cast the three consecutive u8 values to u32
+    return [_]u32{ @intCast(ptr[i]), @intCast(ptr[i + 1]), @intCast(ptr[i + 1]) };
+}
+
 export fn grayscale(ptr: [*]u8, len: usize) void {
     var i: u32 = 0;
     while (i < len) : (i += 4) {
-        const r: u32 = @intCast(ptr[i]);
-        const g: u32 = @intCast(ptr[i + 1]);
-        const b: u32 = @intCast(ptr[i + 2]);
+        const rgb = extractRGB(ptr, i);
 
-        const gray: u8 = @intCast((r + g + b) / 3);
+        const gray: u8 = @intCast((rgb[0] + rgb[1] + rgb[2]) / 3);
         ptr[i] = gray;
         ptr[i + 1] = gray;
         ptr[i + 2] = gray;
@@ -38,15 +41,11 @@ export fn grayscale(ptr: [*]u8, len: usize) void {
 export fn monochrome(ptr: [*]u8, len: usize, r: u32, g: u32, b: u32) void {
     var i: u32 = 0;
     while (i < len) : (i += 4) {
-        const pixe_r: u32 = @intCast(ptr[i]);
-        const pixel_g: u32 = @intCast(ptr[i + 1]);
-        const pixel_b: u32 = @intCast(ptr[i + 2]);
-        // No need to convert to grayscale, already is.
+        const rgb = extractRGB(ptr, i);
 
-        // Apply the grayscale value to the chosen color
-        ptr[i] = @intCast((pixe_r * r) / 255); // Red channel
-        ptr[i + 1] = @intCast((pixel_g * g) / 255); // Green channel
-        ptr[i + 2] = @intCast((pixel_b * b) / 255); // Blue channel
+        ptr[i] = @intCast((rgb[0] * r) / 255);
+        ptr[i + 1] = @intCast((rgb[1] * g) / 255);
+        ptr[i + 2] = @intCast((rgb[2] * b) / 255);
     }
 }
 
@@ -69,5 +68,19 @@ export fn ascii(image_ptr: [*]u8, len: usize, string_ptr: [*]u8, width: u32, inv
             string_ptr[j] = 10;
         }
         j += 1;
+    }
+}
+
+export fn sepia(ptr: [*]u8, len: usize) void {
+    var i: u32 = 0;
+
+    while (i < len) : (i += 4) {
+        const r: f32 = @floatFromInt(ptr[i]);
+        const g: f32 = @floatFromInt(ptr[i + 1]);
+        const b: f32 = @floatFromInt(ptr[i + 2]);
+
+        ptr[i] = @intFromFloat((r * 0.393) + (g * 0.769) + (b * 0.189));
+        ptr[i + 1] = @intFromFloat((r * 0.349) + (g * 0.686) + (b * 0.168));
+        ptr[i + 2] = @intFromFloat((r * 0.272) + (g * 0.534) + (b * 0.131));
     }
 }
