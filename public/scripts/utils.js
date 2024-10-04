@@ -68,10 +68,14 @@ function toggleAsciiMode() {
   elements.canvasConfig.classList.toggle("d-none");
 
   if (isAsciiMode) {
+    config.ascii = true;
+    config.canvas = false;
     elements.asciiToggle.textContent = "Switch to Canvas";
     elements.colorPicker.previousElementSibling.textContent = "Color: ";
     updateCanvasAndFontSize(parseInt(elements.slider.value, 10));
   } else {
+    config.ascii = false;
+    config.canvas = true;
     config.color = "#ffffff";
     elements.asciiToggle.textContent = "Switch to ASCII";
     elements.colorPicker.previousElementSibling.textContent = "Monochrome: ";
@@ -93,15 +97,12 @@ export async function initAndPlay(callback) {
 }
 
 export function hexToRgb(hex) {
-  // Strip the '#' if it's there
   hex = hex.replace("#", "");
 
-  // Parse the r, g, b values from the hex string
   const r = parseInt(hex.slice(0, 2), 16); // Red
   const g = parseInt(hex.slice(2, 4), 16); // Green
   const b = parseInt(hex.slice(4, 6), 16); // Blue
 
-  // Create a Uint8Array to store the RGB values
   const rgbArray = new Uint8Array([r, g, b]);
 
   return rgbArray;

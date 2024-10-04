@@ -31,6 +31,8 @@ export const config = {
   asciiRation: 0.4,
   fontSizeScale: 20,
   lineHeightScale: 1.2,
+  canvas: false,
+  ascii: true,
   canvasWidth: 1280,
   inverted: false,
   color: "#000",
@@ -46,4 +48,6 @@ export const config = {
 };
 
 // Canvas context
-export const context = elements.canvas.getContext("2d");
+export const context = elements.canvas.getContext("2d", {
+  willReadFrequently: true,
+});
