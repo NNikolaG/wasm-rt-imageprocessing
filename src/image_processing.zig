@@ -1,5 +1,4 @@
 const std = @import("std");
-const assert = std.debug.assert;
 const allocator = std.heap.wasm_allocator;
 
 extern fn print(u8) void;
@@ -68,6 +67,64 @@ export fn ascii(image_ptr: [*]u8, len: usize, string_ptr: [*]u8, width: u32, inv
             string_ptr[j] = 10;
         }
         j += 1;
+    }
+}
+
+export fn blur(ptr: [*]u8, len: usize, width: u32, kernel: u8) void {
+    var i: u32 = 0;
+    while (i < len) : (i += 4) {
+        const halfKernel: i8 = @intCast((kernel / 2) * 4);
+        const rowStart: u32 = ptr[i] / width;
+        const colStart: u32 = ptr[i] % width;
+
+        var j: i8 = -halfKernel;
+        var k: i8 = -halfKernel;
+        var sum_r: u32 = 0;
+        var sum_g: u32 = 0;
+        var sum_b: u32 = 0;
+
+        while (j <= halfKernel) : (j += 4) {
+            while (k <= halfKernel) : (k += 4) {
+                var row: u32 = 0;
+                var col: u32 = 0;
+
+                if (j < 0) {
+                    const temp: u32 = @intCast(j);
+                    row = rowStart - temp;
+                } else {
+                    const temp: u32 = @intCast(j);
+                    row = rowStart + temp;
+                }
+                if (k < 0) {
+                    const temp: u32 = @intCast(k);
+                    col = colStart - temp;
+                } else {
+                    const temp: u32 = @intCast(k);
+                    col = colStart + temp;
+                }
+
+                const r: f64 = @floatFromInt(len);
+                const c: f64 = @floatFromInt(width);
+                const x: f64 = @floatFromInt(row);
+                if (row < 0 or x >= @ceil(r / c)) continue;
+                if (col < 0 or row >= width) continue;
+
+                const index: u32 = row * width + col;
+
+                if (index >= 0 and index <= len) {
+                    sum_r += ptr[index];
+                    sum_g += ptr[index + 1];
+                    sum_b += ptr[index + 2];
+                }
+            }
+        }
+        const avg_r: u32 = sum_r / kernel * kernel;
+        const avg_g: u32 = sum_g / kernel * kernel;
+        const avg_b: u32 = sum_b / kernel * kernel;
+
+        ptr[i] = @intCast(avg_r);
+        ptr[i + 1] = @intCast(avg_g);
+        ptr[i + 2] = @intCast(avg_b);
     }
 }
 
