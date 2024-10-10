@@ -1,7 +1,10 @@
 const std = @import("std");
 const allocator = std.heap.wasm_allocator;
 
+extern "env" const memory: [*]u8;
+
 extern fn print(u8) void;
+extern fn printi8(i8) void;
 extern fn printf16(f16) void;
 extern fn printu32(u32) void;
 extern fn printusize(usize) void;
@@ -70,61 +73,79 @@ export fn ascii(image_ptr: [*]u8, len: usize, string_ptr: [*]u8, width: u32, inv
     }
 }
 
-export fn blur(ptr: [*]u8, len: usize, width: u32, kernel: u8) void {
-    var i: u32 = 0;
-    while (i < len) : (i += 4) {
-        const halfKernel: i8 = @intCast((kernel / 2) * 4);
-        const rowStart: u32 = ptr[i] / width;
-        const colStart: u32 = ptr[i] % width;
+// TODO
+// export fn blur(ptr: [*]u8, len: usize, width: u32, kernel: u8) void {
+//     const height = @as(u32, @intCast(len / (4 * width)));
+//     const half_kernel = @as(i32, @intCast(kernel / 2));
 
-        var j: i8 = -halfKernel;
-        var k: i8 = -halfKernel;
-        var sum_r: u32 = 0;
-        var sum_g: u32 = 0;
-        var sum_b: u32 = 0;
+//     // Create a slice for the entire image
+//     const image = ptr[0..len];
 
-        while (j <= halfKernel) : (j += 4) {
-            while (k <= halfKernel) : (k += 4) {
-                var row: u32 = 0;
-                var col: u32 = 0;
+//     // Temporary buffer in the imported memory
+//     const temp_start = len;
+//     const temp = memory[temp_start .. temp_start + len];
 
-                if (j < 0) {
-                    const temp: u32 = @intCast(j);
-                    row = rowStart - temp;
-                } else {
-                    const temp: u32 = @intCast(j);
-                    row = rowStart + temp;
-                }
-                if (k < 0) {
-                    const temp: u32 = @intCast(k);
-                    col = colStart - temp;
-                } else {
-                    const temp: u32 = @intCast(k);
-                    col = colStart + temp;
-                }
+//     // Copy original image to temp buffer
+//     @memcpy(temp, image);
 
-                const r: f64 = @floatFromInt(len);
-                const c: f64 = @floatFromInt(width);
-                const x: f64 = @floatFromInt(row);
-                if (row < 0 or x >= @ceil(r / c)) continue;
-                if (col < 0 or row >= width) continue;
+//     var y: u32 = 0;
+//     while (y < height) : (y += 1) {
+//         var x: u32 = 0;
+//         while (x < width) : (x += 1) {
+//             var r: u32 = 0;
+//             var g: u32 = 0;
+//             var b: u32 = 0;
+//             var a: u32 = 0;
+//             var count: u32 = 0;
 
-                const index: u32 = row * width + col;
+//             var ky: i32 = -half_kernel;
+//             while (ky <= half_kernel) : (ky += 1) {
+//                 var kx: i32 = -half_kernel;
+//                 while (kx <= half_kernel) : (kx += 1) {
+//                     const ny = @as(i32, @intCast(y)) + ky;
+//                     const nx = @as(i32, @intCast(x)) + kx;
 
-                if (index >= 0 and index <= len) {
-                    sum_r += ptr[index];
-                    sum_g += ptr[index + 1];
-                    sum_b += ptr[index + 2];
-                }
-            }
+//                     if (ny >= 0 and ny < @as(i32, @intCast(height)) and nx >= 0 and nx < @as(i32, @intCast(width))) {
+//                         const idx = @as(usize, @intCast((@as(u32, @intCast(ny)) * width + @as(u32, @intCast(nx))) * 4));
+//                         r += temp[idx];
+//                         g += temp[idx + 1];
+//                         b += temp[idx + 2];
+//                         a += temp[idx + 3];
+//                         count += 1;
+//                     }
+//                 }
+//             }
+
+//             const idx = (y * width + x) * 4;
+//             image[idx] = @as(u8, @intCast(r / count));
+//             image[idx + 1] = @as(u8, @intCast(g / count));
+//             image[idx + 2] = @as(u8, @intCast(b / count));
+//             image[idx + 3] = @as(u8, @intCast(a / count));
+//         }
+//     }
+// }
+
+export fn rgbChannelShift(ptr: [*]u8, width: u32, height: u32, offset: u32, channel_index: u32) void {
+    var y: u32 = 0;
+    while (y < height) : (y += 1) {
+        var x: u32 = 0;
+        while (x < width) : (x += 1) {
+            const i = (y * width + x) * 4;
+            const offset_i = ((y + offset) * width + (x + offset)) * 4;
+
+            const offset_channel_value = ptr[offset_i + channel_index];
+
+            var new_pixel: [4]u8 = undefined;
+            new_pixel[0] = if (channel_index == 0) offset_channel_value else ptr[i];
+            new_pixel[1] = if (channel_index == 1) offset_channel_value else ptr[i + 1];
+            new_pixel[2] = if (channel_index == 2) offset_channel_value else ptr[i + 2];
+            new_pixel[3] = 255;
+
+            ptr[i] = new_pixel[0];
+            ptr[i + 1] = new_pixel[1];
+            ptr[i + 2] = new_pixel[2];
+            ptr[i + 3] = new_pixel[3];
         }
-        const avg_r: u32 = sum_r / kernel * kernel;
-        const avg_g: u32 = sum_g / kernel * kernel;
-        const avg_b: u32 = sum_b / kernel * kernel;
-
-        ptr[i] = @intCast(avg_r);
-        ptr[i + 1] = @intCast(avg_g);
-        ptr[i + 2] = @intCast(avg_b);
     }
 }
 

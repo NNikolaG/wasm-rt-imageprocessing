@@ -17,6 +17,6 @@ pub fn build(b: *std.Build) void {
     b.installArtifact(lib);
 
     // Create a custom step to copy the WASM file to the public directory
-    const copy_step = b.addInstallBinFile(.{ .path = "zig-out/bin/imageprocessing.wasm" }, "../../public/wasm/imageprocessing.wasm");
+    const copy_step = b.addInstallBinFile(.{ .src_path = .{ .owner = b, .sub_path = "zig-out/bin/imageprocessing.wasm" } }, "../../public/wasm/imageprocessing.wasm");
     b.getInstallStep().dependOn(&copy_step.step);
 }

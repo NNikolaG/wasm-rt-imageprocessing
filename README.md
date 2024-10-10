@@ -6,7 +6,7 @@ This document provides instructions on how to set up and run the project locally
 
 Ensure you have the following installed on your system:
 
-1. [Zig](https://ziglang.org/download/) (latest version recommended)
+1. [Zig](https://zig.guide/getting-started/installation/) (latest version recommended)
 2. http-server: a simple HTTP server
 
 ## Project Setup
