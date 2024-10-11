@@ -25,8 +25,8 @@ Ensure you have the following installed on your system:
    ```
    zig build
    ```
-
 [//]: # TODO( Fix zig build )
+[//]: # TODO( Add responsive canvas )
 
 Initial zig build will throw error, run it multiple times.
 
