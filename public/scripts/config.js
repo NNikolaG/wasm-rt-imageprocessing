@@ -43,10 +43,6 @@ export const config = {
   importObject: {
     env: {
       print: (data) => console.log(data),
-      printi8: (data) => console.log(data),
-      printf16: (data) => console.log(data),
-      printu32: (data) => console.log(data),
-      printusize: (data) => console.log(data),
       memory: memory,
     },
   },
