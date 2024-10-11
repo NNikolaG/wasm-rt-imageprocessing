@@ -40,6 +40,7 @@ function processVideoFrames(video, wasmExports) {
     //     3,
     //   );
     // }
+
     let stringView = undefined;
     if (config.ascii) {
       stringView = memoryManager.getView("string", data.length, stringLength);
@@ -54,19 +55,32 @@ function processVideoFrames(video, wasmExports) {
     }
 
     if (elements.monochrome.checked) {
-      // const rgb = utils.hexToRgb(config.color);
-      // wasmExports.monochrome(memoryManager.persistentPtr, data.length, ...rgb);
+      const rgb = utils.hexToRgb(config.color);
+      wasmExports.monochrome(memoryManager.persistentPtr, data.length, ...rgb);
+    }
+
+    if (
+      Array.prototype.some.call(
+        elements.channelIndex,
+        (element) => element.checked,
+      )
+    ) {
       wasmExports.rgbChannelShift(
         memoryManager.persistentPtr,
-        config.canvasWidth,
-        config.canvasWidth * config.aspectRatio,
-        50,
-        2,
+        canvas.width,
+        canvas.height,
+        config.offset,
+        config.channelIndex,
       );
     }
 
     if (
-      (elements.grayscale.checked || elements.monochrome.checked) &&
+      (elements.grayscale.checked ||
+        elements.monochrome.checked ||
+        Array.prototype.some.call(
+          elements.channelIndex,
+          (element) => element.checked,
+        )) &&
       config.canvas
     ) {
       imageData.data.set(imageView);

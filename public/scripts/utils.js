@@ -33,6 +33,16 @@ elements.slider.addEventListener("input", () => {
   updateCanvasAndFontSize(parseInt(elements.slider.value, 10));
 });
 
+elements.offsetSlider.addEventListener("input", () => {
+  config.offset = parseInt(elements.offsetSlider.value, 10);
+});
+
+elements.channelIndex.forEach((channel) => {
+  channel.addEventListener("change", () => {
+    config.channelIndex = channel.value;
+  });
+});
+
 elements.themeToggle.addEventListener("click", toggleTheme);
 elements.asciiToggle.addEventListener("click", toggleAsciiMode);
 elements.invertCheckbox.addEventListener("change", function () {
@@ -106,4 +116,8 @@ export function hexToRgb(hex) {
   const rgbArray = new Uint8Array([r, g, b]);
 
   return rgbArray;
+}
+
+function changeOffset(value) {
+  console.log(value);
 }

@@ -17,6 +17,8 @@ export const elements = {
   canvas: document.querySelector("#canvas"),
   ascii: document.querySelector(".ascii"),
   main: document.querySelector("main"),
+  channelIndex: document.querySelectorAll(".channel-index"),
+  offsetSlider: document.querySelector("#offset-slider"),
 };
 
 // WASM Memory
@@ -36,13 +38,11 @@ export const config = {
   canvasWidth: 1280,
   inverted: false,
   color: "#000",
+  channelIndex: 0,
+  offset: 25,
   importObject: {
     env: {
       print: (data) => console.log(data),
-      printi8: (data) => console.log(data),
-      printf16: (data) => console.log(data),
-      printu32: (data) => console.log(data),
-      printusize: (data) => console.log(data),
       memory: memory,
     },
   },

@@ -62,6 +62,12 @@ body.dark-theme {
     line-height: 20px;
 }
 
+.canvas-config {
+    div {
+        margin-bottom: 10px;
+    }
+}
+
 .d-none {
     display: none;
 }

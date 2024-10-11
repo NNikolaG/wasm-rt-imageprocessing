@@ -4,10 +4,6 @@ const allocator = std.heap.wasm_allocator;
 extern "env" const memory: [*]u8;
 
 extern fn print(u8) void;
-extern fn printi8(i8) void;
-extern fn printf16(f16) void;
-extern fn printu32(u32) void;
-extern fn printusize(usize) void;
 
 /// Allocate `len` bytes in WASM memory. Returns
 /// many item pointer on success, null on error.

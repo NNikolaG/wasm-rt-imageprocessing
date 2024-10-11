@@ -58,11 +58,41 @@
                     <label for="monochrome">Monochrome:</label>
                     <input type="radio" id="monochrome" name="color" />
                 </div>
+                <hr />
                 <div>
-                    <label for="offset">Offset:</label>
-                    <input type="radio" id="red" name="offset" />Red
-                    <input type="radio" id="green" name="offset" />Green
-                    <input type="radio" id="blue" name="offset" />Blue
+                    <label>Offset:</label>
+                    <input
+                        type="radio"
+                        id="red"
+                        class="channel-index"
+                        value="0"
+                        name="color"
+                    />Red
+                    <input
+                        type="radio"
+                        class="channel-index"
+                        id="green"
+                        value="1"
+                        name="color"
+                    />Green
+                    <input
+                        type="radio"
+                        id="blue"
+                        class="channel-index"
+                        value="2"
+                        name="color"
+                    />Blue
+                    <div style="margin-top: 5px" class="slider-wrapper">
+                        <label for="offset-slider">Adjust Offset:</label>
+                        <input
+                            type="range"
+                            id="offset-slider"
+                            min="0"
+                            max="50"
+                            step="1"
+                            value="25"
+                        />
+                    </div>
                 </div>
             </div>
 
