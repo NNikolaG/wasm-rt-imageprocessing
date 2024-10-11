@@ -65,7 +65,7 @@ function processVideoFrames(video, wasmExports) {
         (element) => element.checked,
       )
     ) {
-      wasmExports.rgbChannelShift(
+      wasmExports.channel_shift(
         memoryManager.persistentPtr,
         canvas.width,
         canvas.height,

@@ -4,6 +4,10 @@ const allocator = std.heap.wasm_allocator;
 extern "env" const memory: [*]u8;
 
 extern fn print(u8) void;
+extern fn printi8(i8) void;
+extern fn printf16(f16) void;
+extern fn printu32(u32) void;
+extern fn printusize(usize) void;
 
 /// Allocate `len` bytes in WASM memory. Returns
 /// many item pointer on success, null on error.
@@ -121,7 +125,7 @@ export fn ascii(image_ptr: [*]u8, len: usize, string_ptr: [*]u8, width: u32, inv
 //     }
 // }
 
-export fn rgbChannelShift(ptr: [*]u8, width: u32, height: u32, offset: u32, channel_index: u32) void {
+export fn channel_shift(ptr: [*]u8, width: u32, height: u32, offset: u32, channel_index: u32) void {
     var y: u32 = 0;
     while (y < height) : (y += 1) {
         var x: u32 = 0;
