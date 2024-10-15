@@ -44,6 +44,7 @@ wasm-rt-imageprocessing/
 │   │   ├── main.js                # Main JavaScript to interact with WebAssembly
 │   │   ├── config.js              # Configuration settings for the application
 │   │   └── utils.js               # Utility functions for handling DOM and rendering
+│   │   └── memory-manager.js      # Creating views and managing memory
 │   ├── wasm/
 │   │   └── imageprocessing.wasm   # Compiled WebAssembly module
 │   ├── index.html                 # Entry point of the web interface
