@@ -38,9 +38,16 @@ export const elements = {
   monochrome: document.querySelector("#monochrome"),
   grayscale: document.querySelector("#grayscale"),
   fontSize: document.querySelector("#font-size"),
+  effects: document.querySelectorAll(".effect"),
+  solarize: document.querySelector("#solarize"),
   canvas: document.querySelector("#canvas"),
   ascii: document.querySelector(".ascii"),
+  sepia: document.querySelector("#sepia"),
+  blur: document.querySelector("#blur"),
+  neue: document.querySelector("#neue"),
   main: document.querySelector("main"),
+  ryo: document.querySelector("#ryo"),
+  lix: document.querySelector("#lix"),
   channelIndex: document.querySelectorAll(".channel-index"),
   offsetSlider: document.querySelector("#offset-slider"),
 };
@@ -56,6 +63,8 @@ export const elements = {
  */
 export const memory = new WebAssembly.Memory({
   initial: 25,
+  // maximum: 100,
+  // shared: true,
 });
 
 /**
@@ -95,9 +104,14 @@ export const config = {
   color: "#000",
   channelIndex: 0,
   offset: 25,
+  kernelSize: 3,
   importObject: {
     env: {
       print: (data) => console.log(data),
+      printi8: (data) => console.log(data),
+      printf16: (data) => console.log(data),
+      printu32: (data) => console.log(data),
+      printusize: (data) => console.log(data),
       memory: memory,
     },
   },

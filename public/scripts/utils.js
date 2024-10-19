@@ -4,8 +4,8 @@ import { elements, config } from "./config.js";
  * Updates canvas dimensions and font size based on resolution
  * @param {number} resolution - The width of the canvas
  */
-function updateCanvasAndFontSize(resolution) {
-  const width = resolution;
+function updateCanvasAndFontSize(value) {
+  const width = value;
   const height = Math.floor(width * config.asciiRation);
   const fontSize = Math.max(
     1,
@@ -116,8 +116,4 @@ export function hexToRgb(hex) {
   const rgbArray = new Uint8Array([r, g, b]);
 
   return rgbArray;
-}
-
-function changeOffset(value) {
-  console.log(value);
 }
