@@ -104,7 +104,7 @@ export const config = {
   color: "#000",
   channelIndex: 0,
   offset: 25,
-  kernelSize: 3,
+  kernelSize: 9,
   importObject: {
     env: {
       print: (data) => console.log(data),

@@ -21,8 +21,8 @@ function processVideoFrames(video, wasmExports) {
   const memoryManager = new MemoryManager(memory, wasmExports);
 
   const processFrame = () => {
-    // TODO Refactor processFrame func
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    // TODO Refactor processFrame func
     const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
     const { data, width, height } = imageData;
 
@@ -63,7 +63,8 @@ function processVideoFrames(video, wasmExports) {
     }
 
     if (elements.ryo.checked) {
-      wasmExports.ryo(memoryManager.persistentPtr, data.length);
+      wasmExports.obsidian(memoryManager.persistentPtr, data.length);
+      // wasmExports.ryo(memoryManager.persistentPtr, data.length);
     }
 
     if (elements.lix.checked) {

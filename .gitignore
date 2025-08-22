@@ -1,2 +1,9 @@
 .zig-cache/
 zig-out/
+playground
+
+docs
+CLAUDE.md
+
+.idea
+/.idea/
