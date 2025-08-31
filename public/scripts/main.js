@@ -20,19 +20,78 @@ WebAssembly.instantiateStreaming(
 function processVideoFrames(video, wasmExports) {
   const memoryManager = new MemoryManager(memory, wasmExports);
   
+  // Performance optimization variables
+  let lastFrameTime = 0;
+  let frameCount = 0;
+  let isProcessing = false;
+  let lastEffectsState = null;
+  let effectsStateChanged = true;
+  const targetFPS = 60;
+  const frameInterval = 1000 / targetFPS;
+  
+  // Reusable TextDecoder to avoid creating new instances every frame
+  const textDecoder = new TextDecoder('utf-8', { fatal: false, ignoreBOM: true });
+  
+  // Performance monitoring (optional)
+  if (performance.mark) {
+    let perfInterval = setInterval(() => {
+      if (frameCount > 0) {
+        console.log(`FPS: ${(frameCount / (performance.now() - lastFrameTime) * 1000).toFixed(1)}`);
+        frameCount = 0;
+      }
+    }, 5000);
+    
+    window.addEventListener('beforeunload', () => {
+      clearInterval(perfInterval);
+    });
+  }
+  
   // Cleanup memory when page is unloaded
   window.addEventListener('beforeunload', () => {
     memoryManager.destroy();
   });
 
-  const processFrame = () => {
+  const processFrame = (currentTime = performance.now()) => {
+    // Prevent overlapping frame processing
+    if (isProcessing) {
+      requestAnimationFrame(processFrame);
+      return;
+    }
+    
+    // Frame rate limiting
+    if (currentTime - lastFrameTime < frameInterval) {
+      requestAnimationFrame(processFrame);
+      return;
+    }
+    
+    isProcessing = true;
+    lastFrameTime = currentTime;
+    frameCount++;
+    
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
-    // TODO Refactor processFrame func
     const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
     const { data, width, height } = imageData;
 
-    const stringLength = width * height;
+    // Check if any effects are active to optimize processing
+    const hasEffects = config.ascii || 
+      elements.grayscale.checked || 
+      elements.monochrome.checked ||
+      elements.ryo.checked || 
+      elements.lix.checked || 
+      elements.neue.checked ||
+      elements.sepia.checked || 
+      elements.solarize.checked || 
+      elements.blur.checked ||
+      Array.prototype.some.call(elements.channelIndex, el => el.checked);
+    
+    // Skip processing if no effects are active and in canvas mode
+    if (!hasEffects && config.canvas) {
+      isProcessing = false;
+      requestAnimationFrame(processFrame);
+      return;
+    }
 
+    const stringLength = width * height;
     let totalLen = data.length * 2 + stringLength + 6;
 
     if (elements.blur.checked) {
@@ -46,7 +105,6 @@ function processVideoFrames(video, wasmExports) {
 
     if (config.ascii || elements.grayscale.checked) {
       wasmExports.grayscale(memoryManager.persistentPtr, data.length);
-    } else {
     }
 
     let stringView = undefined;
@@ -128,14 +186,13 @@ function processVideoFrames(video, wasmExports) {
     }
 
     if (config.ascii) {
-      const stringRepresentation = new TextDecoder().decode(stringView, {
-        stream: true,
-      });
-
+      // Use the reusable TextDecoder for better performance
+      const stringRepresentation = textDecoder.decode(stringView, { stream: false });
       elements.ascii.textContent = stringRepresentation;
     }
 
     memoryManager.cleanup();
+    isProcessing = false;
 
     requestAnimationFrame(processFrame);
   };

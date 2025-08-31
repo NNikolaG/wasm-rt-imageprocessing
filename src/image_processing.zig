@@ -25,7 +25,7 @@ pub export fn free(ptr: [*]u8, len: usize) void {
 
 fn extractRGB(ptr: [*]u8, i: usize) [3]u32 {
     // Extract and cast the three consecutive u8 values to u32
-    return [_]u32{ @intCast(ptr[i]), @intCast(ptr[i + 1]), @intCast(ptr[i + 1]) };
+    return [_]u32{ @intCast(ptr[i]), @intCast(ptr[i + 1]), @intCast(ptr[i + 2]) };
 }
 
 fn squareDistance(a: [3]u8, b: [3]u8) i32 {
