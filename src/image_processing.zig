@@ -259,17 +259,99 @@ export fn channel_shift(ptr: [*]u8, width: u32, height: u32, offset: u32, channe
     }
 }
 
-export fn sepia(ptr: [*]u8, len: usize) void {
-    var i: u32 = 0;
+pub export fn sepia(ptr: [*]u8, len: usize) void {
+    // 1 pixel = 4 bytes (RGBA)
+    const stride: usize = 4;
+    const n = len - (len % (4 * stride)); // process 4 pixels per iter
 
-    while (i < len) : (i += 4) {
-        const r: f32 = @floatFromInt(ptr[i]);
-        const g: f32 = @floatFromInt(ptr[i + 1]);
-        const b: f32 = @floatFromInt(ptr[i + 2]);
+    // Coefficients as vectors (broadcasted)
+    const Rr: @Vector(4, f32) = @splat(0.393);
+    const Rg: @Vector(4, f32) = @splat(0.769);
+    const Rb: @Vector(4, f32) = @splat(0.189);
 
-        ptr[i] = @intFromFloat((r * 0.393) + (g * 0.769) + (b * 0.189));
-        ptr[i + 1] = @intFromFloat((r * 0.349) + (g * 0.686) + (b * 0.168));
-        ptr[i + 2] = @intFromFloat((r * 0.272) + (g * 0.534) + (b * 0.131));
+    const Gr: @Vector(4, f32) = @splat(0.349);
+    const Gg: @Vector(4, f32) = @splat(0.686);
+    const Gb: @Vector(4, f32) = @splat(0.168);
+
+    const Br: @Vector(4, f32) = @splat(0.272);
+    const Bg: @Vector(4, f32) = @splat(0.534);
+    const Bb: @Vector(4, f32) = @splat(0.131);
+
+    const zero: @Vector(4, f32) = @splat(0.0);
+    const twofiftyfive: @Vector(4, f32) = @splat(255.0);
+
+    // Process 4 pixels per loop
+    var i: usize = 0;
+    while (i < n) : (i += 4 * stride) {
+        // Gather R,G,B for 4 pixels into 4-lane vectors
+        // (Scalar loads for clarity; math is SIMD.)
+        const r_vec = @Vector(4, f32){
+            @floatFromInt(ptr[i + 0]),
+            @floatFromInt(ptr[i + 4 + 0]),
+            @floatFromInt(ptr[i + 8 + 0]),
+            @floatFromInt(ptr[i + 12 + 0]),
+        };
+        const g_vec = @Vector(4, f32){
+            @floatFromInt(ptr[i + 1]),
+            @floatFromInt(ptr[i + 4 + 1]),
+            @floatFromInt(ptr[i + 8 + 1]),
+            @floatFromInt(ptr[i + 12 + 1]),
+        };
+        const b_vec = @Vector(4, f32){
+            @floatFromInt(ptr[i + 2]),
+            @floatFromInt(ptr[i + 4 + 2]),
+            @floatFromInt(ptr[i + 8 + 2]),
+            @floatFromInt(ptr[i + 12 + 2]),
+        };
+
+        // sepia matrix in SIMD (element-wise)
+        var rr = r_vec * Rr + g_vec * Rg + b_vec * Rb;
+        var gg = r_vec * Gr + g_vec * Gg + b_vec * Gb;
+        var bb = r_vec * Br + g_vec * Bg + b_vec * Bb;
+
+        // clamp -> round -> to u8
+        rr = @min(@max(rr, zero), twofiftyfive);
+        gg = @min(@max(gg, zero), twofiftyfive);
+        bb = @min(@max(bb, zero), twofiftyfive);
+
+        const r_u8 = @as(@Vector(4, u8), @intFromFloat(@round(rr)));
+        const g_u8 = @as(@Vector(4, u8), @intFromFloat(@round(gg)));
+        const b_u8 = @as(@Vector(4, u8), @intFromFloat(@round(bb)));
+
+        // Scatter back (alpha untouched)
+        // Pixel 0
+        ptr[i + 0] = r_u8[0];
+        ptr[i + 1] = g_u8[0];
+        ptr[i + 2] = b_u8[0];
+        // Pixel 1
+        ptr[i + 4 + 0] = r_u8[1];
+        ptr[i + 4 + 1] = g_u8[1];
+        ptr[i + 4 + 2] = b_u8[1];
+        // Pixel 2
+        ptr[i + 8 + 0] = r_u8[2];
+        ptr[i + 8 + 1] = g_u8[2];
+        ptr[i + 8 + 2] = b_u8[2];
+        // Pixel 3
+        ptr[i + 12 + 0] = r_u8[3];
+        ptr[i + 12 + 1] = g_u8[3];
+        ptr[i + 12 + 2] = b_u8[3];
+        // (A channel at +3, +7, +11, +15 remains unchanged)
+    }
+
+    // handle trailing pixels (0..3) safely
+    var j = n;
+    while (j + 3 < len) : (j += 4) {
+        const r: f32 = @floatFromInt(ptr[j + 0]);
+        const g: f32 = @floatFromInt(ptr[j + 1]);
+        const b: f32 = @floatFromInt(ptr[j + 2]);
+
+        const rr = @min(@max(r*0.393 + g*0.769 + b*0.189, 0.0), 255.0);
+        const gg = @min(@max(r*0.349 + g*0.686 + b*0.168, 0.0), 255.0);
+        const bb = @min(@max(r*0.272 + g*0.534 + b*0.131, 0.0), 255.0);
+
+        ptr[j + 0] = @as(u8, @intFromFloat(@round(rr)));
+        ptr[j + 1] = @as(u8, @intFromFloat(@round(gg)));
+        ptr[j + 2] = @as(u8, @intFromFloat(@round(bb)));
     }
 }
 
@@ -326,12 +408,41 @@ export fn colorize(ptr: [*]u8, width: u32, height: u32) void {
     }
 }
 
-export fn solarize(ptr: [*]u8, len: usize) void {
+pub export fn solarize(ptr: [*]u8, len: usize) void {
+    const BlockBytes = 16; // 4 pixels (RGBA)
+    const n = len - (len % BlockBytes);
+
+    const MR = comptime [_]i32{ 0, 4,  8, 12 }; // red lanes
+    const thr_val: u8 = 200;
+    const thr4: @Vector(4, u8) = @splat(thr_val);
+    const zero4: @Vector(4, u8) = @splat(0);
+
     var i: usize = 0;
-    while (i < len) : (i += 4) {
-        const r_val = ptr[i];
-        if (@as(i32, 200) - @as(i32, r_val) > 0) {
-            ptr[i] = @intCast(200 - r_val);
-        }
+    while (i < n) : (i += BlockBytes) {
+        const px: @Vector(16, u8) = std.mem.bytesAsValue(@Vector(16, u8), ptr[i..i+BlockBytes]).*;
+
+        const r_u8: @Vector(4, u8) = @shuffle(u8, px, px, MR);
+        const mask: @Vector(4, bool) = r_u8 < thr4;
+
+        // Mask r so subtraction never underflows:
+        const r_masked: @Vector(4, u8) = @select(u8, mask, r_u8, zero4);
+        const flipped:  @Vector(4, u8) = thr4 - r_masked;
+
+        const r_out: @Vector(4, u8) = @select(u8, mask, flipped, r_u8);
+
+        var out = px;
+        out[0]  = r_out[0];
+        out[4]  = r_out[1];
+        out[8]  = r_out[2];
+        out[12] = r_out[3];
+
+        std.mem.bytesAsValue(@Vector(16, u8), ptr[i..i+BlockBytes]).* = out;
+    }
+
+    // Scalar tail
+    var j = n;
+    while (j + 3 < len) : (j += 4) {
+        const r = ptr[j + 0];
+        if (r < thr_val) ptr[j + 0] = thr_val - r;
     }
 }

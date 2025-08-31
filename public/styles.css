@@ -110,12 +110,15 @@ body.dark-theme .sidebar {
 }
 
 .toggle:hover {
-    background-color: currentColor;
-    color: var(--bg-color-light);
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+    color: white;
 }
 
 body.dark-theme .toggle:hover {
-    color: var(--bg-color-dark);
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+    color: white;
 }
 
 /* ===== FORM CONTROLS ===== */
