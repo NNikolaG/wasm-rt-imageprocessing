@@ -16,178 +16,166 @@
         <!-- FPS Counter -->
         <div id="fps-counter">FPS: --</div>
         
-        <!-- Main Content -->
-        <div class="sidebar">
-            <button class="theme-toggle toggle">Switch to Light Theme</button>
-            <button class="ascii-toggle toggle">Switch to Canvas</button>
+        <!-- Controls Panel -->
+        <aside class="sidebar" role="complementary" aria-label="Image processing controls">
+            <!-- Theme & Mode Controls -->
+            <section class="control-group">
+                <button class="theme-toggle toggle" type="button">Switch to Light Theme</button>
+                <button class="ascii-toggle toggle" type="button">Switch to Canvas</button>
+            </section>
 
-            <hr />
-
-            <div class="ascii-config">
-                <div class="slider-wrapper">
-                    <label for="resolution-slider">Adjust Resolution:</label>
+            <!-- ASCII Configuration -->
+            <section class="ascii-config control-group">
+                <h3 class="section-title">ASCII Settings</h3>
+                
+                <div class="control-item">
+                    <label for="resolution-slider">Resolution:</label>
                     <input
                         type="range"
                         id="resolution-slider"
+                        class="slider"
                         min="100"
                         max="600"
                         step="5"
                         value="100"
+                        aria-describedby="resolution-help"
                     />
+                    <small id="resolution-help" class="help-text">Adjust character density</small>
                 </div>
-                <hr />
 
-                <label for="invert">Inverted:</label>
-                <input type="checkbox" id="invert" />
+                <div class="control-item">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="invert" />
+                        <span>Inverted colors</span>
+                    </label>
+                </div>
 
-                <hr />
+                <div class="info-panel">
+                    <div class="info-item">
+                        <span class="info-label">Width:</span>
+                        <span id="canvas-width" class="info-value">--</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Height:</span>
+                        <span id="canvas-height" class="info-value">--</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Font Size:</span>
+                        <span id="font-size" class="info-value">--</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Line Height:</span>
+                        <span id="line-height" class="info-value">--</span>
+                    </div>
+                </div>
+            </section>
 
-                <p>Width: <span id="canvas-width"></span></p>
-                <p>Height: <span id="canvas-height"></span></p>
-                <p>Font Size: <span id="font-size"></span></p>
-                <p>Line Height: <span id="line-height"></span></p>
+            <!-- Canvas Effects Configuration -->
+            <section class="canvas-config control-group d-none">
+                <h3 class="section-title">Visual Effects</h3>
+                
+                <!-- Basic Effects -->
+                <fieldset class="effect-group">
+                    <legend>Basic Effects</legend>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input class="effect" type="radio" id="original" name="color" checked />
+                            <span>Original</span>
+                        </label>
+                        <label class="radio-label">
+                            <input class="effect" type="radio" id="grayscale" name="color" />
+                            <span>Grayscale</span>
+                        </label>
+                        <label class="radio-label">
+                            <input class="effect" type="radio" id="monochrome" name="color" />
+                            <span>Monochrome</span>
+                        </label>
+                        <label class="radio-label">
+                            <input class="effect" type="radio" id="sepia" name="color" />
+                            <span>Sepia</span>
+                        </label>
+                    </div>
+                </fieldset>
+
+                <!-- Advanced Effects -->
+                <fieldset class="effect-group">
+                    <legend>Advanced Effects</legend>
+                    <div class="effect-grid">
+                        <label class="radio-label">
+                            <input class="effect" type="radio" id="ryo" name="color" />
+                            <span>Ryo</span>
+                        </label>
+                        <label class="radio-label">
+                            <input class="effect" type="radio" id="lix" name="color" />
+                            <span>Lix</span>
+                        </label>
+                        <label class="radio-label">
+                            <input class="effect" type="radio" id="neue" name="color" />
+                            <span>Neue</span>
+                        </label>
+                        <label class="radio-label">
+                            <input class="effect" type="radio" id="solarize" name="color" />
+                            <span>Solarize</span>
+                        </label>
+                    </div>
+                </fieldset>
+
+                <!-- Channel Offset -->
+                <fieldset class="effect-group">
+                    <legend>Channel Offset</legend>
+                    <div class="channel-controls">
+                        <div class="radio-group horizontal">
+                            <label class="radio-label">
+                                <input type="radio" id="red" class="channel-index" value="0" name="channel" />
+                                <span>Red</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" class="channel-index" id="green" value="1" name="channel" />
+                                <span>Green</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" id="blue" class="channel-index" value="2" name="channel" />
+                                <span>Blue</span>
+                            </label>
+                        </div>
+                        <div class="control-item">
+                            <label for="offset-slider">Offset Amount:</label>
+                            <input
+                                type="range"
+                                id="offset-slider"
+                                class="slider"
+                                min="0"
+                                max="50"
+                                step="1"
+                                value="25"
+                            />
+                        </div>
+                    </div>
+                </fieldset>
+
+                <!-- Additional Effects -->
+                <div class="control-item">
+                    <label class="checkbox-label">
+                        <input class="effect" type="checkbox" id="blur" name="blur" />
+                        <span>Blur Effect</span>
+                    </label>
+                </div>
+            </section>
+
+            <!-- Color Picker -->
+            <section class="control-group">
+                <div class="control-item">
+                    <label for="color-picker" class="color-picker-label">Accent Color:</label>
+                    <input type="color" id="color-picker" class="color-input" value="#ffffff" />
+                </div>
+            </section>
+        </aside>
+        <!-- Main Display Area -->
+        <main class="display-area" role="main" aria-label="Image processing output">
+            <div class="output-container">
+                <canvas class="d-none" id="canvas" width="100" height="40" aria-label="Processed image canvas"></canvas>
+                <pre class="ascii" aria-label="ASCII art output"></pre>
             </div>
-
-            <div class="canvas-config d-none">
-                <h3>Monochrome</h3>
-                <div>
-                    <label for="original">Original:</label>
-                    <input
-                        class="effect"
-                        type="radio"
-                        id="original"
-                        name="color"
-                        checked
-                    />
-                </div>
-                <div>
-                    <label for="grayscale">Grayscale:</label>
-                    <input
-                        class="effect"
-                        type="radio"
-                        id="grayscale"
-                        name="color"
-                    />
-                </div>
-                <div>
-                    <label for="monochrome">Monochrome:</label>
-                    <input
-                        class="effect"
-                        type="radio"
-                        id="monochrome"
-                        name="color"
-                    />
-                </div>
-                <div>
-                    <label for="sepia">Sepia:</label>
-                    <input
-                        class="effect"
-                        type="radio"
-                        id="sepia"
-                        name="color"
-                    />
-                </div>
-                <hr />
-                <div
-                    class="d-flex justify-content-around"
-                    style="flex-wrap: wrap">
-                    <div>
-                        <div>
-                            <label for="ryo">Ryo:</label>
-                            <input
-                                class="effect"
-                                type="radio"
-                                id="ryo"
-                                name="color"
-                            />
-                        </div>
-                        <div>
-                            <label for="lix">Lix:</label>
-                            <input
-                                class="effect"
-                                type="radio"
-                                id="lix"
-                                name="color"
-                            />
-                        </div>
-                    </div>
-                    <div>
-                        <div>
-                            <label for="neue">Neue:</label>
-                            <input
-                                class="effect"
-                                type="radio"
-                                id="neue"
-                                name="color"
-                            />
-                        </div>
-                        <div>
-                            <label for="solarize">Solarize:</label>
-                            <input
-                                class="effect"
-                                type="radio"
-                                id="solarize"
-                                name="color"
-                            />
-                        </div>
-                    </div>
-                </div>
-
-                <hr />
-                <div>
-                    <label>Offset:</label>
-                    <input
-                        type="radio"
-                        id="red"
-                        class="channel-index"
-                        value="0"
-                        name="color"
-                    />Red
-                    <input
-                        type="radio"
-                        class="channel-index"
-                        id="green"
-                        value="1"
-                        name="color"
-                    />Green
-                    <input
-                        type="radio"
-                        id="blue"
-                        class="channel-index"
-                        value="2"
-                        name="color"
-                    />Blue
-                    <div style="margin-top: 5px" class="slider-wrapper">
-                        <label for="offset-slider">Adjust Offset:</label>
-                        <input
-                            type="range"
-                            id="offset-slider"
-                            min="0"
-                            max="50"
-                            step="1"
-                            value="25"
-                        />
-                    </div>
-                </div>
-                <div>
-                    <label for="blur">Blur:</label>
-                    <input
-                        class="effect"
-                        type="checkbox"
-                        id="blur"
-                        name="blur"
-                    />
-                </div>
-            </div>
-
-            <hr />
-
-            <label class="color-picker" for="color-picker">Color: </label>
-            <input type="color" id="color-picker" value="#ffffff" />
-        </div>
-        <main>
-            <canvas class="d-none" id="canvas" width="100" height="40"></canvas>
-            <pre class="ascii"></pre>
         </main>
 
         <script type="module" src="scripts/main.js"></script>
