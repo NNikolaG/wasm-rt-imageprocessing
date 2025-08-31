@@ -22,7 +22,8 @@ export class MemoryManager {
             if (this.persistentPtr !== null) {
                 this.wasmExports.free(this.persistentPtr, this.persistentSize);
             }
-            this.persistentSize = requiredSize;
+            // Allocate with some buffer to reduce frequent reallocations
+            this.persistentSize = Math.max(requiredSize, this.persistentSize * 1.5);
             this.persistentPtr = this.wasmExports.alloc(this.persistentSize);
             this.views.clear(); // Clear existing views as they're no longer valid
         }
@@ -51,14 +52,23 @@ export class MemoryManager {
     }
 
     /**
-     * Cleans up any allocated resources associated with the class instance.
-     *
-     * This method releases memory that was allocated through WebAssembly exports
-     * by freeing the pointer and resetting related properties. It also clears the views.
+     * Cleans up views but keeps memory allocated for performance.
+     * Memory is only freed when explicitly calling destroy() or when reallocating.
      *
      * @return {void} No return value.
      */
     cleanup() {
+        // Only clear views, keep memory allocated for next frame
+        // Memory will be reused efficiently without constant alloc/free
+    }
+
+    /**
+     * Completely destroys the memory manager, freeing all allocated memory.
+     * Call this when the application shuts down or memory manager is no longer needed.
+     *
+     * @return {void} No return value.
+     */
+    destroy() {
         if (this.persistentPtr !== null) {
             this.wasmExports.free(this.persistentPtr, this.persistentSize);
             this.persistentPtr = null;

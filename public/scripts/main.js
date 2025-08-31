@@ -19,6 +19,11 @@ WebAssembly.instantiateStreaming(
  */
 function processVideoFrames(video, wasmExports) {
   const memoryManager = new MemoryManager(memory, wasmExports);
+  
+  // Cleanup memory when page is unloaded
+  window.addEventListener('beforeunload', () => {
+    memoryManager.destroy();
+  });
 
   const processFrame = () => {
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -63,8 +68,7 @@ function processVideoFrames(video, wasmExports) {
     }
 
     if (elements.ryo.checked) {
-      wasmExports.obsidian(memoryManager.persistentPtr, data.length);
-      // wasmExports.ryo(memoryManager.persistentPtr, data.length);
+      wasmExports.ryo(memoryManager.persistentPtr, data.length);
     }
 
     if (elements.lix.checked) {
