@@ -259,12 +259,13 @@ export fn channel_shift(ptr: [*]u8, width: u32, height: u32, offset: u32, channe
     }
 }
 
+/// 4 pixels (RGBA x 4 = 16 bytes) per iteration with packed load/store.
+/// Requires building with wasm32 + simd128 (which you already do).
 pub export fn sepia(ptr: [*]u8, len: usize) void {
-    // 1 pixel = 4 bytes (RGBA)
-    const stride: usize = 4;
-    const n = len - (len % (4 * stride)); // process 4 pixels per iter
+    const BlockBytes = 16; // 4 pixels
+    const n = len - (len % BlockBytes);
 
-    // Coefficients as vectors (broadcasted)
+    // Broadcast constants
     const Rr: @Vector(4, f32) = @splat(0.393);
     const Rg: @Vector(4, f32) = @splat(0.769);
     const Rb: @Vector(4, f32) = @splat(0.189);
@@ -277,68 +278,67 @@ pub export fn sepia(ptr: [*]u8, len: usize) void {
     const Bg: @Vector(4, f32) = @splat(0.534);
     const Bb: @Vector(4, f32) = @splat(0.131);
 
-    const zero: @Vector(4, f32) = @splat(0.0);
-    const twofiftyfive: @Vector(4, f32) = @splat(255.0);
+    const ZERO: @Vector(4, f32) = @splat(0.0);
+    const MAXV: @Vector(4, f32) = @splat(255.0);
 
-    // Process 4 pixels per loop
+    // Masks to gather/scatter R/G/B from RGBA RGBA RGBA RGBA
+    const MR = comptime [_]i32{ 0, 4,  8, 12 };
+    const MG = comptime [_]i32{ 1, 5,  9, 13 };
+    const MB = comptime [_]i32{ 2, 6, 10, 14 };
+    // alpha lanes: 3, 7, 11, 15 (preserved)
+
     var i: usize = 0;
-    while (i < n) : (i += 4 * stride) {
-        // Gather R,G,B for 4 pixels into 4-lane vectors
-        // (Scalar loads for clarity; math is SIMD.)
-        const r_vec = @Vector(4, f32){
-            @floatFromInt(ptr[i + 0]),
-            @floatFromInt(ptr[i + 4 + 0]),
-            @floatFromInt(ptr[i + 8 + 0]),
-            @floatFromInt(ptr[i + 12 + 0]),
-        };
-        const g_vec = @Vector(4, f32){
-            @floatFromInt(ptr[i + 1]),
-            @floatFromInt(ptr[i + 4 + 1]),
-            @floatFromInt(ptr[i + 8 + 1]),
-            @floatFromInt(ptr[i + 12 + 1]),
-        };
-        const b_vec = @Vector(4, f32){
-            @floatFromInt(ptr[i + 2]),
-            @floatFromInt(ptr[i + 4 + 2]),
-            @floatFromInt(ptr[i + 8 + 2]),
-            @floatFromInt(ptr[i + 12 + 2]),
-        };
+    while (i < n) : (i += BlockBytes) {
+        // ---- Packed load of 16 bytes (unaligned ok) ----
+        const px: @Vector(16, u8) = std.mem.bytesAsValue(@Vector(16, u8), ptr[i..i+BlockBytes]).*;
 
-        // sepia matrix in SIMD (element-wise)
-        var rr = r_vec * Rr + g_vec * Rg + b_vec * Rb;
-        var gg = r_vec * Gr + g_vec * Gg + b_vec * Gb;
-        var bb = r_vec * Br + g_vec * Bg + b_vec * Bb;
+        // Gather R/G/B as 4-lane u8 vectors via shuffle; convert to f32
+        const r_u8: @Vector(4, u8) = @shuffle(u8, px, px, MR);
+        const g_u8: @Vector(4, u8) = @shuffle(u8, px, px, MG);
+        const b_u8: @Vector(4, u8) = @shuffle(u8, px, px, MB);
 
-        // clamp -> round -> to u8
-        rr = @min(@max(rr, zero), twofiftyfive);
-        gg = @min(@max(gg, zero), twofiftyfive);
-        bb = @min(@max(bb, zero), twofiftyfive);
+        const r: @Vector(4, f32) = @floatFromInt(r_u8);
+        const g: @Vector(4, f32) = @floatFromInt(g_u8);
+        const b: @Vector(4, f32) = @floatFromInt(b_u8);
 
-        const r_u8 = @as(@Vector(4, u8), @intFromFloat(@round(rr)));
-        const g_u8 = @as(@Vector(4, u8), @intFromFloat(@round(gg)));
-        const b_u8 = @as(@Vector(4, u8), @intFromFloat(@round(bb)));
+        // ---- Sepia matrix in SIMD ----
+        var rr = r * Rr + g * Rg + b * Rb;
+        var gg = r * Gr + g * Gg + b * Gb;
+        var bb = r * Br + g * Bg + b * Bb;
 
-        // Scatter back (alpha untouched)
-        // Pixel 0
-        ptr[i + 0] = r_u8[0];
-        ptr[i + 1] = g_u8[0];
-        ptr[i + 2] = b_u8[0];
-        // Pixel 1
-        ptr[i + 4 + 0] = r_u8[1];
-        ptr[i + 4 + 1] = g_u8[1];
-        ptr[i + 4 + 2] = b_u8[1];
-        // Pixel 2
-        ptr[i + 8 + 0] = r_u8[2];
-        ptr[i + 8 + 1] = g_u8[2];
-        ptr[i + 8 + 2] = b_u8[2];
-        // Pixel 3
-        ptr[i + 12 + 0] = r_u8[3];
-        ptr[i + 12 + 1] = g_u8[3];
-        ptr[i + 12 + 2] = b_u8[3];
-        // (A channel at +3, +7, +11, +15 remains unchanged)
+        // Clamp → round → u8
+        rr = @min(@max(rr, ZERO), MAXV);
+        gg = @min(@max(gg, ZERO), MAXV);
+        bb = @min(@max(bb, ZERO), MAXV);
+
+        const rr_u8: @Vector(4, u8) = @intFromFloat(@round(rr));
+        const gg_u8: @Vector(4, u8) = @intFromFloat(@round(gg));
+        const bb_u8: @Vector(4, u8) = @intFromFloat(@round(bb));
+
+        // ---- Re-interleave into a single 16-byte vector; alpha preserved ----
+        // (Mutate lanes in registers; final store is one 16-byte write.)
+        var out = px;
+
+        out[0]  = rr_u8[0];
+        out[4]  = rr_u8[1];
+        out[8]  = rr_u8[2];
+        out[12] = rr_u8[3];
+
+        out[1]  = gg_u8[0];
+        out[5]  = gg_u8[1];
+        out[9]  = gg_u8[2];
+        out[13] = gg_u8[3];
+
+        out[2]  = bb_u8[0];
+        out[6]  = bb_u8[1];
+        out[10] = bb_u8[2];
+        out[14] = bb_u8[3];
+
+        // ---- Packed store ----
+        std.mem.bytesAsValue(@Vector(16, u8), ptr[i..i+BlockBytes]).* = out;
     }
 
-    // handle trailing pixels (0..3) safely
+    // Scalar tail (0..3 leftover pixels)
     var j = n;
     while (j + 3 < len) : (j += 4) {
         const r: f32 = @floatFromInt(ptr[j + 0]);
@@ -352,6 +352,7 @@ pub export fn sepia(ptr: [*]u8, len: usize) void {
         ptr[j + 0] = @as(u8, @intFromFloat(@round(rr)));
         ptr[j + 1] = @as(u8, @intFromFloat(@round(gg)));
         ptr[j + 2] = @as(u8, @intFromFloat(@round(bb)));
+        // alpha at j+3 unchanged
     }
 }
 
