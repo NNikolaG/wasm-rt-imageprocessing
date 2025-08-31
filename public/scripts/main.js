@@ -24,27 +24,30 @@ function processVideoFrames(video, wasmExports) {
   let lastFrameTime = 0;
   let frameCount = 0;
   let isProcessing = false;
-  let lastEffectsState = null;
-  let effectsStateChanged = true;
   const targetFPS = 60;
   const frameInterval = 1000 / targetFPS;
+  
+  // FPS tracking variables
+  let fpsFrameCount = 0;
+  let fpsLastTime = performance.now();
+  let currentFPS = 0;
+  const fpsCounter = document.getElementById('fps-counter');
   
   // Reusable TextDecoder to avoid creating new instances every frame
   const textDecoder = new TextDecoder('utf-8', { fatal: false, ignoreBOM: true });
   
-  // Performance monitoring (optional)
-  if (performance.mark) {
-    let perfInterval = setInterval(() => {
-      if (frameCount > 0) {
-        console.log(`FPS: ${(frameCount / (performance.now() - lastFrameTime) * 1000).toFixed(1)}`);
-        frameCount = 0;
-      }
-    }, 5000);
+  // FPS display update
+  const updateFPS = () => {
+    const now = performance.now();
+    const delta = now - fpsLastTime;
     
-    window.addEventListener('beforeunload', () => {
-      clearInterval(perfInterval);
-    });
-  }
+    if (delta >= 1000) {
+      currentFPS = Math.round((fpsFrameCount * 1000) / delta);
+      fpsCounter.textContent = `FPS: ${currentFPS}`;
+      fpsFrameCount = 0;
+      fpsLastTime = now;
+    }
+  };
   
   // Cleanup memory when page is unloaded
   window.addEventListener('beforeunload', () => {
@@ -67,6 +70,8 @@ function processVideoFrames(video, wasmExports) {
     isProcessing = true;
     lastFrameTime = currentTime;
     frameCount++;
+    fpsFrameCount++;
+    updateFPS();
     
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
     const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
