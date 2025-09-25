@@ -24,32 +24,32 @@
  * - offsetSlider: The slider element for setting the offset.
  */
 export const elements = {
-  sliderWrapper: document.querySelector(".slider-wrapper"),
-  canvasHeight: document.querySelector("#canvas-height"),
-  canvasConfig: document.querySelector(".canvas-config"),
-  slider: document.querySelector("#resolution-slider"),
-  canvasWidth: document.querySelector("#canvas-width"),
-  themeToggle: document.querySelector(".theme-toggle"),
-  asciiToggle: document.querySelector(".ascii-toggle"),
-  asciiConfig: document.querySelector(".ascii-config"),
-  colorPicker: document.querySelector("#color-picker"),
-  lineHeight: document.querySelector("#line-height"),
-  invertCheckbox: document.querySelector("#invert"),
-  monochrome: document.querySelector("#monochrome"),
-  grayscale: document.querySelector("#grayscale"),
-  fontSize: document.querySelector("#font-size"),
-  effects: document.querySelectorAll(".effect"),
-  solarize: document.querySelector("#solarize"),
-  canvas: document.querySelector("#canvas"),
-  ascii: document.querySelector(".ascii"),
-  sepia: document.querySelector("#sepia"),
-  blur: document.querySelector("#blur"),
-  neue: document.querySelector("#neue"),
-  main: document.querySelector("main"),
-  ryo: document.querySelector("#ryo"),
-  lix: document.querySelector("#lix"),
-  channelIndex: document.querySelectorAll(".channel-index"),
-  offsetSlider: document.querySelector("#offset-slider"),
+    sliderWrapper: document.querySelector(".slider-wrapper"),
+    canvasHeight: document.querySelector("#canvas-height"),
+    canvasConfig: document.querySelector(".canvas-config"),
+    slider: document.querySelector("#resolution-slider"),
+    canvasWidth: document.querySelector("#canvas-width"),
+    themeToggle: document.querySelector(".theme-toggle"),
+    asciiToggle: document.querySelector(".ascii-toggle"),
+    asciiConfig: document.querySelector(".ascii-config"),
+    colorPicker: document.querySelector("#color-picker"),
+    lineHeight: document.querySelector("#line-height"),
+    invertCheckbox: document.querySelector("#invert"),
+    monochrome: document.querySelector("#monochrome"),
+    grayscale: document.querySelector("#grayscale"),
+    fontSize: document.querySelector("#font-size"),
+    effects: document.querySelectorAll(".effect"),
+    solarize: document.querySelector("#solarize"),
+    canvas: document.querySelector("#canvas"),
+    ascii: document.querySelector(".ascii"),
+    sepia: document.querySelector("#sepia"),
+    blur: document.querySelector("#blur"),
+    neue: document.querySelector("#neue"),
+    main: document.querySelector("main"),
+    ryo: document.querySelector("#ryo"),
+    lix: document.querySelector("#lix"),
+    channelIndex: document.querySelectorAll(".channel-index"),
+    offsetSlider: document.querySelector("#offset-slider"),
 };
 
 /**
@@ -62,9 +62,9 @@ export const elements = {
  * by WebAssembly instances.
  */
 export const memory = new WebAssembly.Memory({
-  initial: 25,
-  // maximum: 100,
-  // shared: true,
+    initial: 25,
+    // maximum: 100,
+    // shared: true,
 });
 
 /**
@@ -92,29 +92,29 @@ export const memory = new WebAssembly.Memory({
  * @property {WebAssembly.Memory} importObject.env.memory - The memory object for the WebAssembly environment.
  */
 export const config = {
-  defaultResolution: 100,
-  aspectRatio: 0.75,
-  asciiRation: 0.4,
-  fontSizeScale: 20,
-  lineHeightScale: 1.2,
-  canvas: false,
-  ascii: true,
-  canvasWidth: 1280,
-  inverted: false,
-  color: "#000",
-  channelIndex: 0,
-  offset: 25,
-  kernelSize: 9,
-  importObject: {
-    env: {
-      print: (data) => console.log(data),
-      printi8: (data) => console.log(data),
-      printf16: (data) => console.log(data),
-      printu32: (data) => console.log(data),
-      printusize: (data) => console.log(data),
-      memory: memory,
+    defaultResolution: 100,
+    aspectRatio: 0.75,
+    asciiRation: 0.4,
+    fontSizeScale: 20,
+    lineHeightScale: 1.2,
+    canvas: false,
+    ascii: true,
+    canvasWidth: 1280,
+    inverted: false,
+    color: "#000",
+    channelIndex: 0,
+    offset: 25,
+    kernelSize: 9,
+    importObject: {
+        env: {
+            print: (data) => console.log(data),
+            printi8: (data) => console.log(data),
+            printf16: (data) => console.log(data),
+            printu32: (data) => console.log(data),
+            printusize: (data) => console.log(data),
+            memory: memory,
+        },
     },
-  },
 };
 
 /**
@@ -126,5 +126,5 @@ export const config = {
  * - `willReadFrequently`: A boolean indicating that the canvas will be read frequently, which might improve performance depending on the user agent.
  */
 export const context = elements.canvas.getContext("2d", {
-  willReadFrequently: true,
+    willReadFrequently: true,
 });

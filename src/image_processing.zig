@@ -282,15 +282,15 @@ pub export fn sepia(ptr: [*]u8, len: usize) void {
     const MAXV: @Vector(4, f32) = @splat(255.0);
 
     // Masks to gather/scatter R/G/B from RGBA RGBA RGBA RGBA
-    const MR = comptime [_]i32{ 0, 4,  8, 12 };
-    const MG = comptime [_]i32{ 1, 5,  9, 13 };
+    const MR = comptime [_]i32{ 0, 4, 8, 12 };
+    const MG = comptime [_]i32{ 1, 5, 9, 13 };
     const MB = comptime [_]i32{ 2, 6, 10, 14 };
     // alpha lanes: 3, 7, 11, 15 (preserved)
 
     var i: usize = 0;
     while (i < n) : (i += BlockBytes) {
         // ---- Packed load of 16 bytes (unaligned ok) ----
-        const px: @Vector(16, u8) = std.mem.bytesAsValue(@Vector(16, u8), ptr[i..i+BlockBytes]).*;
+        const px: @Vector(16, u8) = std.mem.bytesAsValue(@Vector(16, u8), ptr[i .. i + BlockBytes]).*;
 
         // Gather R/G/B as 4-lane u8 vectors via shuffle; convert to f32
         const r_u8: @Vector(4, u8) = @shuffle(u8, px, px, MR);
@@ -319,23 +319,23 @@ pub export fn sepia(ptr: [*]u8, len: usize) void {
         // (Mutate lanes in registers; final store is one 16-byte write.)
         var out = px;
 
-        out[0]  = rr_u8[0];
-        out[4]  = rr_u8[1];
-        out[8]  = rr_u8[2];
+        out[0] = rr_u8[0];
+        out[4] = rr_u8[1];
+        out[8] = rr_u8[2];
         out[12] = rr_u8[3];
 
-        out[1]  = gg_u8[0];
-        out[5]  = gg_u8[1];
-        out[9]  = gg_u8[2];
+        out[1] = gg_u8[0];
+        out[5] = gg_u8[1];
+        out[9] = gg_u8[2];
         out[13] = gg_u8[3];
 
-        out[2]  = bb_u8[0];
-        out[6]  = bb_u8[1];
+        out[2] = bb_u8[0];
+        out[6] = bb_u8[1];
         out[10] = bb_u8[2];
         out[14] = bb_u8[3];
 
         // ---- Packed store ----
-        std.mem.bytesAsValue(@Vector(16, u8), ptr[i..i+BlockBytes]).* = out;
+        std.mem.bytesAsValue(@Vector(16, u8), ptr[i .. i + BlockBytes]).* = out;
     }
 
     // Scalar tail (0..3 leftover pixels)
@@ -345,9 +345,9 @@ pub export fn sepia(ptr: [*]u8, len: usize) void {
         const g: f32 = @floatFromInt(ptr[j + 1]);
         const b: f32 = @floatFromInt(ptr[j + 2]);
 
-        const rr = @min(@max(r*0.393 + g*0.769 + b*0.189, 0.0), 255.0);
-        const gg = @min(@max(r*0.349 + g*0.686 + b*0.168, 0.0), 255.0);
-        const bb = @min(@max(r*0.272 + g*0.534 + b*0.131, 0.0), 255.0);
+        const rr = @min(@max(r * 0.393 + g * 0.769 + b * 0.189, 0.0), 255.0);
+        const gg = @min(@max(r * 0.349 + g * 0.686 + b * 0.168, 0.0), 255.0);
+        const bb = @min(@max(r * 0.272 + g * 0.534 + b * 0.131, 0.0), 255.0);
 
         ptr[j + 0] = @as(u8, @intFromFloat(@round(rr)));
         ptr[j + 1] = @as(u8, @intFromFloat(@round(gg)));
@@ -373,11 +373,34 @@ export fn lix(ptr: [*]u8, len: usize) void {
 }
 
 export fn neue(ptr: [*]u8, len: usize) void {
+    const BlockBytes = 16; // 4 pixels
+    const n = len - (len % BlockBytes);
+
+    const MB = comptime [_]i32{ 2, 6, 10, 14 };
+    const max_u8: @Vector(4, u8) = @splat(255);
+
     var i: usize = 0;
-    while (i < len) : (i += 4) {
-        const b_val = ptr[i + 2];
-        if (@as(i32, 255) - @as(i32, b_val) > 0) {
-            ptr[i + 2] = 255 - b_val;
+    while (i < n) : (i += BlockBytes) {
+        var px: @Vector(16, u8) = std.mem.bytesAsValue(@Vector(16, u8), ptr[i .. i + BlockBytes]).*;
+
+        const b_u8: @Vector(4, u8) = @shuffle(u8, px, px, MB);
+        const mask: @Vector(4, bool) = b_u8 < max_u8;
+        const inv: @Vector(4, u8) = max_u8 - b_u8;
+        const b_out: @Vector(4, u8) = @select(u8, mask, inv, b_u8);
+
+        px[2] = b_out[0];
+        px[6] = b_out[1];
+        px[10] = b_out[2];
+        px[14] = b_out[3];
+
+        std.mem.bytesAsValue(@Vector(16, u8), ptr[i .. i + BlockBytes]).* = px;
+    }
+
+    var j = n;
+    while (j + 3 < len) : (j += 4) {
+        const b_val = ptr[j + 2];
+        if (b_val != 255) {
+            ptr[j + 2] = 255 - b_val;
         }
     }
 }
@@ -413,31 +436,31 @@ pub export fn solarize(ptr: [*]u8, len: usize) void {
     const BlockBytes = 16; // 4 pixels (RGBA)
     const n = len - (len % BlockBytes);
 
-    const MR = comptime [_]i32{ 0, 4,  8, 12 }; // red lanes
+    const MR = comptime [_]i32{ 0, 4, 8, 12 }; // red lanes
     const thr_val: u8 = 200;
     const thr4: @Vector(4, u8) = @splat(thr_val);
     const zero4: @Vector(4, u8) = @splat(0);
 
     var i: usize = 0;
     while (i < n) : (i += BlockBytes) {
-        const px: @Vector(16, u8) = std.mem.bytesAsValue(@Vector(16, u8), ptr[i..i+BlockBytes]).*;
+        const px: @Vector(16, u8) = std.mem.bytesAsValue(@Vector(16, u8), ptr[i .. i + BlockBytes]).*;
 
         const r_u8: @Vector(4, u8) = @shuffle(u8, px, px, MR);
         const mask: @Vector(4, bool) = r_u8 < thr4;
 
         // Mask r so subtraction never underflows:
         const r_masked: @Vector(4, u8) = @select(u8, mask, r_u8, zero4);
-        const flipped:  @Vector(4, u8) = thr4 - r_masked;
+        const flipped: @Vector(4, u8) = thr4 - r_masked;
 
         const r_out: @Vector(4, u8) = @select(u8, mask, flipped, r_u8);
 
         var out = px;
-        out[0]  = r_out[0];
-        out[4]  = r_out[1];
-        out[8]  = r_out[2];
+        out[0] = r_out[0];
+        out[4] = r_out[1];
+        out[8] = r_out[2];
         out[12] = r_out[3];
 
-        std.mem.bytesAsValue(@Vector(16, u8), ptr[i..i+BlockBytes]).* = out;
+        std.mem.bytesAsValue(@Vector(16, u8), ptr[i .. i + BlockBytes]).* = out;
     }
 
     // Scalar tail

@@ -1,206 +1,166 @@
-import { config, context, elements, memory } from "./config.js";
-import { MemoryManager } from "./memory-manager.js";
+// main.js
+import {config, context, elements, memory} from "./config.js";
+import {MemoryManager} from "./memory-manager.js";
 import * as utils from "./utils.js";
 
+const textDecoder = new TextDecoder("utf-8", {fatal: false, ignoreBOM: true});
+
 WebAssembly.instantiateStreaming(
-  fetch("../wasm/imageprocessing.wasm"),
-  config.importObject,
-).then((obj) =>
-  utils.initAndPlay((video) => processVideoFrames(video, obj.instance.exports)),
-);
+    fetch("../wasm/imageprocessing.wasm"),
+    config.importObject // must include { env: { memory } } since you import_memory=true
+).then(({instance}) => {
+    utils.initAndPlay((video) => processVideoFrames(video, instance.exports));
+});
 
-/**
- * Processes video frames by applying various effects such as grayscale, sepia, blur, and ASCII conversion
- * using WebAssembly exports and updates the canvas accordingly.
- *
- * @param {HTMLVideoElement} video - The video element whose frames are to be processed.
- * @param {Object} wasmExports - An object containing WebAssembly exported functions for image processing.
- * @return {void}
- */
-function processVideoFrames(video, wasmExports) {
-  const memoryManager = new MemoryManager(memory, wasmExports);
-  
-  // Performance optimization variables
-  let lastFrameTime = 0;
-  let frameCount = 0;
-  let isProcessing = false;
-  const targetFPS = 60;
-  const frameInterval = 1000 / targetFPS;
-  
-  // FPS tracking variables
-  let fpsFrameCount = 0;
-  let fpsLastTime = performance.now();
-  let currentFPS = 0;
-  const fpsCounter = document.getElementById('fps-counter');
-  
-  // Reusable TextDecoder to avoid creating new instances every frame
-  const textDecoder = new TextDecoder('utf-8', { fatal: false, ignoreBOM: true });
-  
-  // FPS display update
-  const updateFPS = () => {
-    const now = performance.now();
-    const delta = now - fpsLastTime;
-    
-    if (delta >= 1000) {
-      currentFPS = Math.round((fpsFrameCount * 1000) / delta);
-      fpsCounter.textContent = `FPS: ${currentFPS}`;
-      fpsFrameCount = 0;
-      fpsLastTime = now;
-    }
-  };
-  
-  // Cleanup memory when page is unloaded
-  window.addEventListener('beforeunload', () => {
-    memoryManager.destroy();
-  });
+function processVideoFrames(video, wasm) {
+    const mm = new MemoryManager(memory, wasm);
 
-  const processFrame = (currentTime = performance.now()) => {
-    // Prevent overlapping frame processing
-    if (isProcessing) {
-      requestAnimationFrame(processFrame);
-      return;
-    }
-    
-    // Frame rate limiting
-    if (currentTime - lastFrameTime < frameInterval) {
-      requestAnimationFrame(processFrame);
-      return;
-    }
-    
-    isProcessing = true;
-    lastFrameTime = currentTime;
-    frameCount++;
-    fpsFrameCount++;
-    updateFPS();
-    
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-    const { data, width, height } = imageData;
+    // Canvas refs (make sure these exist in your config)
+    const canvas = context.canvas;
+    const width = 1280;
+    const height = 960;
 
-    // Check if any effects are active to optimize processing
-    const hasEffects = config.ascii || 
-      elements.grayscale.checked || 
-      elements.monochrome.checked ||
-      elements.ryo.checked || 
-      elements.lix.checked || 
-      elements.neue.checked ||
-      elements.sepia.checked || 
-      elements.solarize.checked || 
-      elements.blur.checked ||
-      Array.prototype.some.call(elements.channelIndex, el => el.checked);
-    
-    // Skip processing if no effects are active and in canvas mode
-    if (!hasEffects && config.canvas) {
-      isProcessing = false;
-      requestAnimationFrame(processFrame);
-      return;
-    }
+    // --- compute buffer layout (once per resolution) ---
+    const RGBA_LEN = width * height * 4;
+    const STR_LEN = width * height;       // ascii string buffer (1 byte per pixel)
+    const BLUR_LEN = RGBA_LEN;             // 1:1 temp for box blur (if used)
+    const PADDING = 64;                   // small headroom/alignment
 
-    const stringLength = width * height;
-    let totalLen = data.length * 2 + stringLength + 6;
+    // Choose whether blur/ascii scratch is reserved up front.
+    // (If you prefer strictly-on-demand, you can bump size at runtime too.)
+    const NEEDS_BLUR = true;  // reserve scratch ahead of time
+    const NEEDS_STRING = true;
 
-    if (elements.blur.checked) {
-      totalLen += data.length;
-    }
+    const IMG_OFF = 0;
+    const BLUR_OFF = IMG_OFF + RGBA_LEN;
+    const STR_OFF = BLUR_OFF + (NEEDS_BLUR ? BLUR_LEN : 0);
+    const TOTAL_LEN = STR_OFF + (NEEDS_STRING ? STR_LEN : 0) + PADDING;
 
-    memoryManager.ensureMemorySize(totalLen);
+    // Ensure region & build persistent views
+    mm.ensureMemorySize(TOTAL_LEN);
+    let ptr = mm.persistentPtr;
 
-    const imageView = memoryManager.getView("image", 0, data.length);
-    imageView.set(data);
+    let imgU8 = mm.getView("imgU8", IMG_OFF, RGBA_LEN, Uint8Array);             // for .set(source)
+    let imgCl = mm.getView("imgCl", IMG_OFF, RGBA_LEN, Uint8ClampedArray);       // for ImageData
+    let strU8 = mm.getView("strU8", STR_OFF, STR_LEN, Uint8Array);               // ascii target (optional)
+    let imageData = new ImageData(imgCl, width, height);                          // no extra copy
 
-    if (config.ascii || elements.grayscale.checked) {
-      wasmExports.grayscale(memoryManager.persistentPtr, data.length);
-    }
+    // Rebuild views if buffer identity changes (memory.grow())
+    const refreshViewsIfNeeded = () => {
+        // ensureMemorySize will clear internal view cache if buffer changed
+        mm.ensureMemorySize(TOTAL_LEN);
+        ptr = mm.persistentPtr;
+        imgU8 = mm.getView("imgU8", IMG_OFF, RGBA_LEN, Uint8Array);
+        imgCl = mm.getView("imgCl", IMG_OFF, RGBA_LEN, Uint8ClampedArray);
+        strU8 = mm.getView("strU8", STR_OFF, STR_LEN, Uint8Array);
+        imageData = new ImageData(imgCl, width, height);
+    };
 
-    let stringView = undefined;
-    if (config.ascii) {
-      stringView = memoryManager.getView("string", data.length, stringLength);
+    // FPS widget (optional)
+    const fpsCounter = document.getElementById("fps-counter");
+    let lastFPSStamp = performance.now();
+    let fpsFrames = 0;
 
-      wasmExports.ascii(
-        memoryManager.persistentPtr,
-        data.length,
-        memoryManager.persistentPtr + data.length,
-        canvas.width,
-        config.inverted,
-      );
-    }
+    const tickFPS = () => {
+        fpsFrames++;
+        const now = performance.now();
+        if (now - lastFPSStamp >= 1000) {
+            if (fpsCounter) fpsCounter.textContent = `FPS: ${fpsFrames}`;
+            fpsFrames = 0;
+            lastFPSStamp = now;
+        }
+    };
 
-    if (elements.monochrome.checked) {
-      const rgb = utils.hexToRgb(config.color);
-      wasmExports.monochrome(memoryManager.persistentPtr, data.length, ...rgb);
-    }
+    let isProcessing = false;
 
-    if (elements.ryo.checked) {
-      wasmExports.ryo(memoryManager.persistentPtr, data.length);
-    }
+    function processFrame() {
+        if (isProcessing) return requestAnimationFrame(processFrame);
+        isProcessing = true;
 
-    if (elements.lix.checked) {
-      wasmExports.lix(memoryManager.persistentPtr, data.length);
-    }
+        // 1) Draw current video frame to canvas (source path)
+        context.drawImage(video, 0, 0, width, height);
+        const src = context.getImageData(0, 0, width, height).data; // unavoidable copy from canvas
 
-    if (elements.neue.checked) {
-      wasmExports.neue(memoryManager.persistentPtr, data.length);
-    }
+        // 2) Bulk copy into WASM memory once
+        refreshViewsIfNeeded();     // if memory grew, fix views once
+        imgU8.set(src);             // single fast copy
 
-    if (elements.sepia.checked) {
-      wasmExports.sepia(memoryManager.persistentPtr, data.length);
-    }
+        // 3) Run effects (prefer one pipeline export; here we keep your toggles)
+        //    NOTE: pass scratch/string pointers when needed
+        if (config.ascii || elements.grayscale.checked) {
+            wasm.grayscale(ptr + IMG_OFF, RGBA_LEN);
+        }
+        if (config.ascii) {
+            wasm.ascii(
+                ptr + IMG_OFF,
+                RGBA_LEN,
+                ptr + STR_OFF,          // ascii output buffer
+                width,
+                config.inverted
+            );
+        }
+        if (elements.monochrome.checked) {
+            const [r, g, b] = utils.hexToRgb(config.color);
+            wasm.monochrome(ptr + IMG_OFF, RGBA_LEN, r, g, b);
+        }
+        if (elements.ryo.checked) wasm.ryo(ptr + IMG_OFF, RGBA_LEN);
+        if (elements.lix.checked) wasm.lix(ptr + IMG_OFF, RGBA_LEN);
+        if (elements.neue.checked) wasm.neue(ptr + IMG_OFF, RGBA_LEN);
 
-    if (elements.solarize.checked) {
-      wasmExports.solarize(memoryManager.persistentPtr, data.length);
-    }
+        if (elements.sepia.checked) {
+            // If you exported sepia_simd_packed, use it; otherwise sepia().
+            (wasm.sepia_simd_packed ?? wasm.sepia)(ptr + IMG_OFF, RGBA_LEN);
+        }
 
-    if (elements.blur.checked) {
-      wasmExports.box_blur(
-        memoryManager.persistentPtr,
-        canvas.width,
-        canvas.height,
-        config.kernelSize,
-        memoryManager.persistentPtr + data.length,
-      );
+        if (elements.solarize.checked) {
+            (wasm.solarize_simd_packed ?? wasm.solarize)(ptr + IMG_OFF, RGBA_LEN);
+        }
+
+        if (elements.blur.checked) {
+            wasm.box_blur(
+                ptr + IMG_OFF,
+                width,
+                height,
+                config.kernelSize,
+                ptr + BLUR_OFF          // scratch buffer same size as image
+            );
+        }
+
+        if ([...elements.channelIndex].some(el => el.checked)) {
+            wasm.channel_shift(
+                ptr + IMG_OFF,
+                width,
+                height,
+                config.offset,
+                config.channelIndex
+            );
+        }
+
+        // 4) Draw back — no extra JS copy (ImageData already views WASM memory)
+        if (
+            ([...elements.channelIndex].some(el => el.checked) ||
+                [...elements.effects].some(el => el.checked) ||
+                elements.sepia.checked || elements.solarize.checked ||
+                elements.blur.checked || config.ascii || elements.grayscale.checked) &&
+            config.canvas
+        ) {
+            context.putImageData(imageData, 0, 0);
+        }
+
+        // 5) ASCII text (optional)
+        if (config.ascii) {
+            const txt = textDecoder.decode(strU8, {stream: false});
+            elements.ascii.textContent = txt;
+        }
+
+        tickFPS();
+        isProcessing = false;
+        requestAnimationFrame(processFrame);
     }
 
-    if (
-      Array.prototype.some.call(
-        elements.channelIndex,
-        (element) => element.checked,
-      )
-    ) {
-      wasmExports.channel_shift(
-        memoryManager.persistentPtr,
-        canvas.width,
-        canvas.height,
-        config.offset,
-        config.channelIndex,
-      );
-    }
+    // Cleanup on unload
+    window.addEventListener("beforeunload", () => mm.destroy());
 
-    if (
-      (Array.prototype.some.call(
-        elements.channelIndex,
-        (element) => element.checked,
-      ) ||
-        Array.prototype.some.call(
-          elements.effects,
-          (element) => element.checked,
-        )) &&
-      config.canvas
-    ) {
-      imageData.data.set(imageView);
-      context.putImageData(imageData, 0, 0);
-    }
-
-    if (config.ascii) {
-      // Use the reusable TextDecoder for better performance
-      const stringRepresentation = textDecoder.decode(stringView, { stream: false });
-      elements.ascii.textContent = stringRepresentation;
-    }
-
-    memoryManager.cleanup();
-    isProcessing = false;
-
+    // Kick off
     requestAnimationFrame(processFrame);
-  };
-
-  processFrame();
 }
