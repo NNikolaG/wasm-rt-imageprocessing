@@ -36,11 +36,15 @@ fn squareDistance(a: [3]u8, b: [3]u8) i32 {
 }
 
 export fn grayscale(ptr: [*]u8, len: usize) void {
-    var i: u32 = 0;
-    while (i < len) : (i += 4) {
-        const rgb = extractRGB(ptr, i);
+    var i: usize = 0;
+    while (i + 3 < len) : (i += 4) {
+        const r = @as(u32, ptr[i]);
+        const g = @as(u32, ptr[i + 1]);
+        const b = @as(u32, ptr[i + 2]);
 
-        const gray: u8 = @intCast((rgb[0] + rgb[1] + rgb[2]) / 3);
+        // Fast approximation: (r + g + b) * 85 >> 8 ≈ (r + g + b) / 3
+        // 85/256 ≈ 1/3, so we use bit shifting for performance
+        const gray: u8 = @as(u8, @intCast(((r + g + b) * 85) >> 8));
         ptr[i] = gray;
         ptr[i + 1] = gray;
         ptr[i + 2] = gray;
