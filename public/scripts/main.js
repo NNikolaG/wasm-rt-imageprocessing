@@ -136,14 +136,81 @@ function processVideoFrames(video, wasm) {
             );
         }
 
+        // 🎞️ BATCH 1: VINTAGE & FILM EFFECTS
+        if (elements.vignette?.checked) {
+            wasm.vignette(
+                ptr + IMG_OFF,
+                RGBA_LEN,
+                width,
+                height,
+                parseFloat(elements.vignetteIntensity?.value || 0.5)
+            );
+        }
+
+        if (elements.filmGrain?.checked) {
+            wasm.film_grain(
+                ptr + IMG_OFF,
+                RGBA_LEN,
+                parseInt(elements.grainIntensity?.value || 20)
+            );
+        }
+
+        if (elements.crossProcess?.checked) {
+            wasm.cross_process(ptr + IMG_OFF, RGBA_LEN);
+        }
+
+        if (elements.lomography?.checked) {
+            wasm.lomography(ptr + IMG_OFF, RGBA_LEN);
+        }
+
+        // 🌈 BATCH 1: COLOR ADJUSTMENTS
+        if (elements.brightnessContrast?.checked) {
+            wasm.brightness_contrast(
+                ptr + IMG_OFF,
+                RGBA_LEN,
+                parseInt(elements.brightnessValue?.value || 0),
+                parseFloat(elements.contrastValue?.value || 1.0)
+            );
+        }
+
+        if (elements.saturationFilter?.checked) {
+            wasm.saturation(
+                ptr + IMG_OFF,
+                RGBA_LEN,
+                parseFloat(elements.saturationValue?.value || 1.0)
+            );
+        }
+
+        if (elements.hueShift?.checked) {
+            wasm.hue_shift(
+                ptr + IMG_OFF,
+                RGBA_LEN,
+                parseFloat(elements.hueDegrees?.value || 0)
+            );
+        }
+
+        if (elements.temperatureFilter?.checked) {
+            wasm.temperature(
+                ptr + IMG_OFF,
+                RGBA_LEN,
+                parseFloat(elements.temperatureValue?.value || 0)
+            );
+        }
+
         // 4) Draw back — no extra JS copy (ImageData already views WASM memory)
-        if (
-            ([...elements.channelIndex].some(el => el.checked) ||
-                [...elements.effects].some(el => el.checked) ||
-                elements.sepia.checked || elements.solarize.checked ||
-                elements.blur.checked || config.ascii || elements.grayscale.checked) &&
-            config.canvas
-        ) {
+        const hasActiveFilters = (
+            [...elements.channelIndex].some(el => el.checked) ||
+            [...elements.effects].some(el => el.checked) ||
+            elements.sepia?.checked || elements.solarize?.checked ||
+            elements.blur?.checked || config.ascii || elements.grayscale?.checked ||
+            // New Batch 1 filters
+            elements.vignette?.checked || elements.filmGrain?.checked ||
+            elements.crossProcess?.checked || elements.lomography?.checked ||
+            elements.brightnessContrast?.checked || elements.saturationFilter?.checked ||
+            elements.hueShift?.checked || elements.temperatureFilter?.checked
+        );
+
+        if (hasActiveFilters && config.canvas) {
             context.putImageData(imageData, 0, 0);
         }
 

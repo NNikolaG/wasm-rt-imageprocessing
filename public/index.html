@@ -97,9 +97,174 @@
                     </div>
                 </fieldset>
 
-                <!-- Advanced Effects -->
+                <!-- BATCH 1: VINTAGE & FILM EFFECTS -->
                 <fieldset class="effect-group">
-                    <legend>Advanced Effects</legend>
+                    <legend>Vintage & Film Effects</legend>
+
+                    <!-- Vignette with Controls -->
+                    <div class="filter-control-group">
+                        <label class="radio-label">
+                            <input class="effect" type="radio" id="vignette" name="color" />
+                            <span>Vignette</span>
+                        </label>
+                        <div class="control-item">
+                            <label for="vignette-intensity">Intensity:</label>
+                            <input
+                                type="range"
+                                id="vignette-intensity"
+                                class="slider"
+                                min="0"
+                                max="1"
+                                step="0.1"
+                                value="0.5"
+                            />
+                            <span class="slider-value">0.5</span>
+                        </div>
+                    </div>
+
+                    <!-- Film Grain with Controls -->
+                    <div class="filter-control-group">
+                        <label class="radio-label">
+                            <input class="effect" type="radio" id="film-grain" name="color" />
+                            <span>Film Grain</span>
+                        </label>
+                        <div class="control-item">
+                            <label for="grain-intensity">Amount:</label>
+                            <input
+                                type="range"
+                                id="grain-intensity"
+                                class="slider"
+                                min="0"
+                                max="50"
+                                step="5"
+                                value="20"
+                            />
+                            <span class="slider-value">20</span>
+                        </div>
+                    </div>
+
+                    <!-- Cross Process (no controls) -->
+                    <div class="filter-control-group">
+                        <label class="radio-label">
+                            <input class="effect" type="radio" id="cross-process" name="color" />
+                            <span>Cross Process</span>
+                        </label>
+                    </div>
+
+                    <!-- Lomography (no controls) -->
+                    <div class="filter-control-group">
+                        <label class="radio-label">
+                            <input class="effect" type="radio" id="lomography" name="color" />
+                            <span>Lomography</span>
+                        </label>
+                    </div>
+                </fieldset>
+
+                <!-- BATCH 1: COLOR ADJUSTMENTS -->
+                <fieldset class="effect-group">
+                    <legend>Color Adjustments</legend>
+
+                    <!-- Brightness/Contrast with Controls -->
+                    <div class="filter-control-group">
+                        <label class="radio-label">
+                            <input class="effect" type="radio" id="brightness-contrast" name="color" />
+                            <span>Brightness/Contrast</span>
+                        </label>
+                        <div class="control-item">
+                            <label for="brightness-value">Brightness:</label>
+                            <input
+                                type="range"
+                                id="brightness-value"
+                                class="slider"
+                                min="-50"
+                                max="50"
+                                step="5"
+                                value="0"
+                            />
+                            <span class="slider-value">0</span>
+                        </div>
+                        <div class="control-item">
+                            <label for="contrast-value">Contrast:</label>
+                            <input
+                                type="range"
+                                id="contrast-value"
+                                class="slider"
+                                min="0.5"
+                                max="2.0"
+                                step="0.1"
+                                value="1.0"
+                            />
+                            <span class="slider-value">1.0</span>
+                        </div>
+                    </div>
+
+                    <!-- Saturation with Controls -->
+                    <div class="filter-control-group">
+                        <label class="radio-label">
+                            <input class="effect" type="radio" id="saturation-filter" name="color" />
+                            <span>Saturation</span>
+                        </label>
+                        <div class="control-item">
+                            <label for="saturation-value">Amount:</label>
+                            <input
+                                type="range"
+                                id="saturation-value"
+                                class="slider"
+                                min="0"
+                                max="2"
+                                step="0.1"
+                                value="1.0"
+                            />
+                            <span class="slider-value">1.0</span>
+                        </div>
+                    </div>
+
+                    <!-- Hue Shift with Controls -->
+                    <div class="filter-control-group">
+                        <label class="radio-label">
+                            <input class="effect" type="radio" id="hue-shift" name="color" />
+                            <span>Hue Shift</span>
+                        </label>
+                        <div class="control-item">
+                            <label for="hue-degrees">Degrees:</label>
+                            <input
+                                type="range"
+                                id="hue-degrees"
+                                class="slider"
+                                min="-180"
+                                max="180"
+                                step="10"
+                                value="0"
+                            />
+                            <span class="slider-value">0°</span>
+                        </div>
+                    </div>
+
+                    <!-- Temperature with Controls -->
+                    <div class="filter-control-group">
+                        <label class="radio-label">
+                            <input class="effect" type="radio" id="temperature-filter" name="color" />
+                            <span>Temperature</span>
+                        </label>
+                        <div class="control-item">
+                            <label for="temperature-value">Warmth:</label>
+                            <input
+                                type="range"
+                                id="temperature-value"
+                                class="slider"
+                                min="-1"
+                                max="1"
+                                step="0.1"
+                                value="0"
+                            />
+                            <span class="slider-value">0</span>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <!-- Advanced Effects (Legacy) -->
+                <fieldset class="effect-group">
+                    <legend>Legacy Effects</legend>
                     <div class="effect-grid">
                         <label class="radio-label">
                             <input class="effect" type="radio" id="ryo" name="color" />
@@ -160,6 +325,7 @@
                         <span>Blur Effect</span>
                     </label>
                 </div>
+
             </section>
 
             <!-- Color Picker -->
@@ -179,5 +345,31 @@
         </main>
 
         <script type="module" src="scripts/main.js"></script>
+        <script>
+            // Update slider value displays in real-time
+            document.addEventListener('DOMContentLoaded', function() {
+                const sliders = [
+                    { slider: 'vignette-intensity', value: '.slider-value', suffix: '' },
+                    { slider: 'grain-intensity', value: '.slider-value', suffix: '' },
+                    { slider: 'brightness-value', value: '.slider-value', suffix: '' },
+                    { slider: 'contrast-value', value: '.slider-value', suffix: '' },
+                    { slider: 'saturation-value', value: '.slider-value', suffix: '' },
+                    { slider: 'hue-degrees', value: '.slider-value', suffix: '°' },
+                    { slider: 'temperature-value', value: '.slider-value', suffix: '' }
+                ];
+
+                sliders.forEach(config => {
+                    const slider = document.getElementById(config.slider);
+                    if (slider) {
+                        const valueDisplay = slider.parentNode.querySelector('.slider-value');
+                        if (valueDisplay) {
+                            slider.addEventListener('input', () => {
+                                valueDisplay.textContent = slider.value + config.suffix;
+                            });
+                        }
+                    }
+                });
+            });
+        </script>
     </body>
 </html>

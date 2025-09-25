@@ -50,6 +50,25 @@ export const elements = {
     lix: document.querySelector("#lix"),
     channelIndex: document.querySelectorAll(".channel-index"),
     offsetSlider: document.querySelector("#offset-slider"),
+
+    // 🎞️ BATCH 1: NEW FILTER ELEMENTS
+    vignette: document.querySelector("#vignette"),
+    filmGrain: document.querySelector("#film-grain"),
+    crossProcess: document.querySelector("#cross-process"),
+    lomography: document.querySelector("#lomography"),
+    brightnessContrast: document.querySelector("#brightness-contrast"),
+    saturationFilter: document.querySelector("#saturation-filter"),
+    hueShift: document.querySelector("#hue-shift"),
+    temperatureFilter: document.querySelector("#temperature-filter"),
+
+    // Parameter sliders
+    vignetteIntensity: document.querySelector("#vignette-intensity"),
+    grainIntensity: document.querySelector("#grain-intensity"),
+    brightnessValue: document.querySelector("#brightness-value"),
+    contrastValue: document.querySelector("#contrast-value"),
+    saturationValue: document.querySelector("#saturation-value"),
+    hueDegrees: document.querySelector("#hue-degrees"),
+    temperatureValue: document.querySelector("#temperature-value"),
 };
 
 /**

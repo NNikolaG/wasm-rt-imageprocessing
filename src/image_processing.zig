@@ -358,3 +358,204 @@ pub export fn solarize(ptr: [*]u8, len: usize) void {
         // Green, blue, and alpha channels remain unchanged
     }
 }
+
+// === BATCH 1: CLASSIC PHOTO FILTERS ===
+
+/// Vignette effect - darkens edges, keeps center bright
+pub export fn vignette(ptr: [*]u8, len: usize, width: u32, height: u32, intensity: f32) void {
+    // Safety checks
+    if (width == 0 or height == 0 or len == 0) return;
+
+    const center_x: f32 = @as(f32, @floatFromInt(width)) * 0.5;
+    const center_y: f32 = @as(f32, @floatFromInt(height)) * 0.5;
+    const max_distance: f32 = @sqrt(center_x * center_x + center_y * center_y);
+
+    // Prevent division by zero
+    if (max_distance == 0.0) return;
+
+    var i: usize = 0;
+    var y: u32 = 0;
+    while (y < height) : (y += 1) {
+        var x: u32 = 0;
+        while (x < width) : (x += 1) {
+            // Bounds checking
+            if (i + 3 >= len) return;
+
+            // Calculate distance from center
+            const dx: f32 = @as(f32, @floatFromInt(x)) - center_x;
+            const dy: f32 = @as(f32, @floatFromInt(y)) - center_y;
+            const distance: f32 = @sqrt(dx * dx + dy * dy);
+
+            // Calculate vignette factor (0.0 = black edges, 1.0 = no effect)
+            const normalized_distance: f32 = distance / max_distance;
+            const vignette_factor: f32 = 1.0 - (normalized_distance * @max(0.0, @min(1.0, intensity)));
+            const factor: f32 = @max(0.0, @min(1.0, vignette_factor));
+
+            // Apply vignette to RGB channels with safe casting
+            const r: f32 = @as(f32, @floatFromInt(ptr[i])) * factor;
+            const g: f32 = @as(f32, @floatFromInt(ptr[i + 1])) * factor;
+            const b: f32 = @as(f32, @floatFromInt(ptr[i + 2])) * factor;
+
+            ptr[i] = @as(u8, @intFromFloat(@max(0.0, @min(255.0, r))));
+            ptr[i + 1] = @as(u8, @intFromFloat(@max(0.0, @min(255.0, g))));
+            ptr[i + 2] = @as(u8, @intFromFloat(@max(0.0, @min(255.0, b))));
+
+            i += 4;
+        }
+    }
+}
+
+/// Film grain effect - adds random noise for vintage look
+pub export fn film_grain(ptr: [*]u8, len: usize, intensity: u32) void {
+    var seed: u32 = 12345;
+    var i: usize = 0;
+    while (i + 3 < len) : (i += 4) {
+        // Simple linear congruential generator for noise
+        seed = seed *% 1103515245 +% 12345;
+        const noise: i32 = @as(i32, @intCast((seed >> 16) & 0xFF)) - 128;
+        const grain: i32 = (noise * @as(i32, @intCast(intensity))) >> 8;
+
+        // Apply grain to RGB channels
+        const r: i32 = @as(i32, ptr[i]) + grain;
+        const g: i32 = @as(i32, ptr[i + 1]) + grain;
+        const b: i32 = @as(i32, ptr[i + 2]) + grain;
+
+        ptr[i] = @as(u8, @intCast(@max(0, @min(255, r))));
+        ptr[i + 1] = @as(u8, @intCast(@max(0, @min(255, g))));
+        ptr[i + 2] = @as(u8, @intCast(@max(0, @min(255, b))));
+    }
+}
+
+/// Cross process effect - dramatic color curve manipulation
+pub export fn cross_process(ptr: [*]u8, len: usize) void {
+    var i: usize = 0;
+    while (i + 3 < len) : (i += 4) {
+        const r = @as(f32, @floatFromInt(ptr[i])) / 255.0;
+        const g = @as(f32, @floatFromInt(ptr[i + 1])) / 255.0;
+        const b = @as(f32, @floatFromInt(ptr[i + 2])) / 255.0;
+
+        // S-curve for dramatic contrast
+        const new_r: f32 = r * r * (3.0 - 2.0 * r);
+        const new_g: f32 = g * 0.9 + 0.1;  // Slight green tint
+        const new_b: f32 = b * b * b;      // Crush blues
+
+        ptr[i] = @as(u8, @intFromFloat(@max(0.0, @min(1.0, new_r)) * 255.0));
+        ptr[i + 1] = @as(u8, @intFromFloat(@max(0.0, @min(1.0, new_g)) * 255.0));
+        ptr[i + 2] = @as(u8, @intFromFloat(@max(0.0, @min(1.0, new_b)) * 255.0));
+    }
+}
+
+/// Lomography effect - high contrast with color cast
+pub export fn lomography(ptr: [*]u8, len: usize) void {
+    var i: usize = 0;
+    while (i + 3 < len) : (i += 4) {
+        const r = @as(f32, @floatFromInt(ptr[i])) / 255.0;
+        const g = @as(f32, @floatFromInt(ptr[i + 1])) / 255.0;
+        const b = @as(f32, @floatFromInt(ptr[i + 2])) / 255.0;
+
+        // High contrast curve
+        const contrast: f32 = 1.5;
+        const new_r: f32 = ((r - 0.5) * contrast + 0.5) * 1.1;  // Boost reds
+        const new_g: f32 = ((g - 0.5) * contrast + 0.5) * 0.95; // Reduce greens
+        const new_b: f32 = ((b - 0.5) * contrast + 0.5) * 0.8;  // Cyan cast
+
+        ptr[i] = @as(u8, @intFromFloat(@max(0.0, @min(1.0, new_r)) * 255.0));
+        ptr[i + 1] = @as(u8, @intFromFloat(@max(0.0, @min(1.0, new_g)) * 255.0));
+        ptr[i + 2] = @as(u8, @intFromFloat(@max(0.0, @min(1.0, new_b)) * 255.0));
+    }
+}
+
+/// Brightness and contrast adjustment
+pub export fn brightness_contrast(ptr: [*]u8, len: usize, brightness: i32, contrast: f32) void {
+    var i: usize = 0;
+    while (i + 3 < len) : (i += 4) {
+        // Apply brightness and contrast to RGB channels
+        const r: i32 = @as(i32, ptr[i]) + brightness;
+        const g: i32 = @as(i32, ptr[i + 1]) + brightness;
+        const b: i32 = @as(i32, ptr[i + 2]) + brightness;
+
+        // Apply contrast
+        const contrast_r: f32 = (@as(f32, @floatFromInt(r)) - 128.0) * contrast + 128.0;
+        const contrast_g: f32 = (@as(f32, @floatFromInt(g)) - 128.0) * contrast + 128.0;
+        const contrast_b: f32 = (@as(f32, @floatFromInt(b)) - 128.0) * contrast + 128.0;
+
+        ptr[i] = @as(u8, @intCast(@max(0, @min(255, @as(i32, @intFromFloat(contrast_r))))));
+        ptr[i + 1] = @as(u8, @intCast(@max(0, @min(255, @as(i32, @intFromFloat(contrast_g))))));
+        ptr[i + 2] = @as(u8, @intCast(@max(0, @min(255, @as(i32, @intFromFloat(contrast_b))))));
+    }
+}
+
+/// Saturation adjustment - control color intensity
+pub export fn saturation(ptr: [*]u8, len: usize, factor: f32) void {
+    var i: usize = 0;
+    while (i + 3 < len) : (i += 4) {
+        const r: f32 = @floatFromInt(ptr[i]);
+        const g: f32 = @floatFromInt(ptr[i + 1]);
+        const b: f32 = @floatFromInt(ptr[i + 2]);
+
+        // Calculate grayscale value (luminance)
+        const gray: f32 = r * 0.299 + g * 0.587 + b * 0.114;
+
+        // Interpolate between grayscale and original color
+        const new_r: f32 = gray + (r - gray) * factor;
+        const new_g: f32 = gray + (g - gray) * factor;
+        const new_b: f32 = gray + (b - gray) * factor;
+
+        ptr[i] = @as(u8, @intCast(@max(0, @min(255, @as(i32, @intFromFloat(new_r))))));
+        ptr[i + 1] = @as(u8, @intCast(@max(0, @min(255, @as(i32, @intFromFloat(new_g))))));
+        ptr[i + 2] = @as(u8, @intCast(@max(0, @min(255, @as(i32, @intFromFloat(new_b))))));
+    }
+}
+
+/// Hue shift - rotate colors around the color wheel
+pub export fn hue_shift(ptr: [*]u8, len: usize, shift_degrees: f32) void {
+    const shift_radians: f32 = shift_degrees * std.math.pi / 180.0;
+    const cos_shift: f32 = @cos(shift_radians);
+    const sin_shift: f32 = @sin(shift_radians);
+
+    var i: usize = 0;
+    while (i + 3 < len) : (i += 4) {
+        const r: f32 = @floatFromInt(ptr[i]);
+        const g: f32 = @floatFromInt(ptr[i + 1]);
+        const b: f32 = @floatFromInt(ptr[i + 2]);
+
+        // Convert to YIQ color space for hue rotation
+        const y: f32 = 0.299 * r + 0.587 * g + 0.114 * b;
+        const i_val: f32 = 0.596 * r - 0.275 * g - 0.321 * b;
+        const q_val: f32 = 0.212 * r - 0.523 * g + 0.311 * b;
+
+        // Rotate I and Q components
+        const new_i: f32 = i_val * cos_shift - q_val * sin_shift;
+        const new_q: f32 = i_val * sin_shift + q_val * cos_shift;
+
+        // Convert back to RGB
+        const new_r: f32 = y + 0.956 * new_i + 0.621 * new_q;
+        const new_g: f32 = y - 0.272 * new_i - 0.647 * new_q;
+        const new_b: f32 = y - 1.106 * new_i + 1.703 * new_q;
+
+        ptr[i] = @as(u8, @intCast(@max(0, @min(255, @as(i32, @intFromFloat(new_r))))));
+        ptr[i + 1] = @as(u8, @intCast(@max(0, @min(255, @as(i32, @intFromFloat(new_g))))));
+        ptr[i + 2] = @as(u8, @intCast(@max(0, @min(255, @as(i32, @intFromFloat(new_b))))));
+    }
+}
+
+/// Color temperature adjustment - warm/cool balance
+pub export fn temperature(ptr: [*]u8, len: usize, temp_factor: f32) void {
+    var i: usize = 0;
+    while (i + 3 < len) : (i += 4) {
+        const r: f32 = @floatFromInt(ptr[i]);
+        const g: f32 = @floatFromInt(ptr[i + 1]);
+        const b: f32 = @floatFromInt(ptr[i + 2]);
+
+        // Adjust color temperature
+        // Positive values = warmer (more red/yellow)
+        // Negative values = cooler (more blue)
+        const new_r: f32 = r * (1.0 + temp_factor * 0.3);
+        const new_g: f32 = g * (1.0 + temp_factor * 0.1);
+        const new_b: f32 = b * (1.0 - temp_factor * 0.4);
+
+        ptr[i] = @as(u8, @intCast(@max(0, @min(255, @as(i32, @intFromFloat(new_r))))));
+        ptr[i + 1] = @as(u8, @intCast(@max(0, @min(255, @as(i32, @intFromFloat(new_g))))));
+        ptr[i + 2] = @as(u8, @intCast(@max(0, @min(255, @as(i32, @intFromFloat(new_b))))));
+    }
+}

@@ -13,6 +13,10 @@
     --spacing-md: 12px;
     --spacing-lg: 16px;
     --spacing-xl: 20px;
+    --filter-bg: rgba(0, 0, 0, 0.05);
+    --filter-bg-dark: rgba(255, 255, 255, 0.05);
+    --control-bg: rgba(0, 0, 0, 0.02);
+    --control-bg-dark: rgba(255, 255, 255, 0.02);
 }
 
 /* ===== RESET & BASE STYLES ===== */
@@ -324,4 +328,77 @@ body.dark-theme #fps-counter {
         font-size: 0.7rem;
         padding: var(--spacing-xs) var(--spacing-sm);
     }
+}
+
+/* ===== FILTER CONTROL GROUPS ===== */
+.filter-control-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    padding: 0;
+    margin-bottom: var(--spacing-sm);
+    border: none;
+}
+
+.filter-control-group .radio-label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: var(--spacing-sm);
+    display: block;
+}
+
+.filter-control-group .control-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-top: 0;
+    padding-left: calc(var(--spacing-lg) + 18px);
+    opacity: 1;
+    transition: opacity 0.2s ease;
+}
+
+.filter-control-group .control-item label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: inherit;
+    opacity: 0.9;
+}
+
+.filter-control-group .slider {
+    flex: 1;
+    min-width: 120px;
+    max-width: 220px;
+    margin: 0;
+}
+
+.filter-control-group .slider-value {
+    background-color: var(--accent-color);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    min-width: 32px;
+    text-align: center;
+    display: inline-block;
+}
+
+/* Show controls when filter is selected */
+.filter-control-group:has(input[type="radio"]:checked) .control-item {
+    opacity: 1;
+}
+
+.filter-control-group:has(input[type="radio"]:checked) {
+    background-color: transparent;
+    color: inherit;
+    border: none;
+}
+
+.filter-control-group:has(input[type="radio"]:checked) label {
+    color: inherit;
+}
+
+body.dark-theme .filter-control-group:has(input[type="radio"]:checked) {
+    background-color: transparent;
+    color: inherit;
 }
